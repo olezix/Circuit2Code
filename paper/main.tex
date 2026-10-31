@@ -613,11 +613,21 @@ that current SMT solvers do not provide.
 
 \paragraph{Scope.}
 The symbolic encoder and faithful circuit target one-layer attention-only
-models. Deeper models, MLPs and other tasks can be synthesised and verified
-through the enclosure path, with interval coefficients instead of exact rational
-ones, but we do not claim those experiments here. Motif identification is
-exhaustive over a small DSL; programs outside the DSL fall back to the faithful
-circuit rather than to open-ended synthesis.
+models. The enclosure engine and the SMT encoder already handle several layers
+and a ReLU MLP, so a deeper model can be *proved* against a given program, but
+no decompiler is provided for it, and we claim no such experiment. Motif
+identification is exhaustive over a small DSL; programs outside the DSL fall
+back to the faithful circuit rather than to open-ended synthesis.
+
+\paragraph{Tasks other than modular arithmetic.}
+We do not report Dyck-1 bracket balancing, which we had planned as a second
+domain. The reason is structural rather than incidental: our architecture has no
+positional embeddings, so it is permutation-invariant and cannot represent a
+prefix-dependent language at all. Dyck support needs learned positional
+embeddings, which change the forward pass and therefore the SMT encoder. The
+*symbolic* half is already expressible in the IR --- a word is balanced iff
+every prefix sum is non-negative and the total is zero --- but without a model
+that can learn the task there is nothing to decompile.
 
 \paragraph{Broader impact.}
 Turning a network into auditable code is a step towards accountability for

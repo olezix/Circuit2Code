@@ -390,18 +390,27 @@ how much of the algorithm the network has actually learned.
 
 * **Linear access assumed.** The prover evaluates the network through its
   weights, not through black-box queries; white-box verification is the setting.
-* **One-layer attention-only models** are supported for the *symbolic* encoder
-  and the faithful circuit; deeper or MLP models can still be synthesised and
-  verified through the enclosure path, but the Z3 formula then uses interval
-  coefficients rather than exact rational ones.
+* **One-layer attention-only models** are supported by the circuit analysis and
+  the faithful circuit (the builder raises rather than guessing otherwise). The
+  enclosure engine (`compute_logit_bounds`) and the SMT encoder already handle
+  multiple layers and a ReLU MLP, so a deeper model can be *proved* against a
+  given program, but no decompiler for it is provided.
+* **Only modular arithmetic is implemented.** Dyck-1 bracket balancing was on
+  the roadmap and is *not* present. It is not a small addition: this
+  architecture has no positional embeddings, so it is permutation-invariant and
+  literally cannot compute a prefix-dependent language — Dyck support requires
+  learned positional embeddings, which change both the forward pass and the SMT
+  encoder. The symbolic side (an IR program `min_prefix ≥ 0 ∧ total = 0`) is
+  expressible with the existing nodes; it is the model side that is missing.
 * **Softmax is not an SMT primitive.** It is handled by certified enclosures;
   the equivalence statement therefore concerns the exact network evaluated at
   the input, with the enclosure carrying the rounding uncertainty. It is not a
   proof about an arbitrary softmax-parameterised network family.
 * **Discrete motif search is exhaustive over a small DSL**, not open-ended
   program synthesis. Programs outside the DSL fall back to the faithful circuit.
-* Only tasks where the input domain is finite and enumerable (modular
-  arithmetic; bounded Dyck words) can be certified exhaustively.
+* Only tasks whose input domain is finite and enumerable can be certified
+  exhaustively; modular arithmetic at p=59 (3,481 inputs) is comfortably inside
+  that envelope, larger domains are not.
 
 ## 11. Repository layout
 
