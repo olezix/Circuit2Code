@@ -349,7 +349,7 @@ a useful intermediate case between the grokked `g70.pt` and the 87% run
 | head ablation (Δacc / Δlogit) | 0.913/11.7, 0.911/11.6, 0.887/6.6, 0.928/11.5 |
 | stage-1 motif | none (argmax is not exactly `(a+b) mod 113`) |
 | emitted program | faithful trigonometric circuit, 11,055 nodes |
-| Z3 `model_equivalence` | **proved**, 12,769/12,769 inputs (658 s) |
+| Z3 `model_equivalence` | **proved**, 12,769/12,769 inputs (663 s) |
 | Z3 `logit_equivalence` | **proved**, 1,442,897 certified logit comparisons |
 | float32 ↔ float64 deployment gap | 7.5e-5 |
 | Python / C | 8.18 MB / 7.70 MB, `gcc -O3` clean in 11.1 s, C ≡ Python on all 12,769 inputs |
@@ -360,7 +360,7 @@ Reproduce it with
 python demo/cli.py train --p 113 --epochs 30000 --train-fraction 0.7 --seed 3 \
     --torch-threads 1 --out artifacts/checkpoints/g113.pt     # 2h15m for 18k epochs
 python demo/cli.py verify --checkpoint artifacts/checkpoints/g113.pt \
-    --train-fraction 0.7 --json artifacts/verification_p113.json   # 658 s
+    --train-fraction 0.7 --json artifacts/verification_p113.json   # 663 s
 python scripts/truncation_sweep.py artifacts/checkpoints/g113.pt \
     --train-fraction 0.7 --budget 8 --no-verify
 ```
@@ -507,7 +507,7 @@ answers to different questions.
   program synthesis. Programs outside the DSL fall back to the faithful circuit.
 * Only tasks whose input domain is finite and enumerable can be certified
   exhaustively; modular arithmetic at p=59 (3,481 inputs) and p=113 (12,769
-  inputs) are inside that envelope, at 1.5 s and 658 s of proof time
+  inputs) are inside that envelope, at 1.5 s and 663 s of proof time
   respectively. Domains grow as `p²`, so p=113 is roughly the practical ceiling
   on one CPU core.
 
