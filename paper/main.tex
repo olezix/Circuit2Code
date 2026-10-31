@@ -126,10 +126,10 @@ Transformers trained on modular arithmetic. Our contributions are:
         (Section~\ref{sec:results}).
   \item \textbf{A measured circuit-health statistic}: the fraction of spectral
         energy carried by three frequencies separates a network that has learned
-        the algorithm ($95$--$99\%$) from one that has memorised the table
+        the algorithm ($97$--$99.8\%$) from one that has memorised the table
         ($27$--$43\%$), and tracks the accuracy that the decompiled circuit
         actually achieves (Section~\ref{sec:results}).
-  \item \textbf{An open, reproducible implementation} with a 107-test suite in
+  \item \textbf{An open, reproducible implementation} with a 113-test suite in
         which the generated C is compiled and executed on every input of the
         domain, and every generated Python module is executed and compared
         against the IR's reference semantics.
@@ -503,7 +503,9 @@ $29$ & $1.000$ & $1.000$ & $1.000$ \\
 \caption{Full-domain argmax agreement between a $|K|$-frequency truncation of the
 faithful circuit and the network. At $|K|=7$ checkpoint G is reproduced exactly
 and the equivalence is \emph{proved}; for every row with agreement below one,
-equivalence is refuted by counting, so no SMT query is needed.}
+equivalence is refuted by counting, so no SMT query is needed. A dash marks a
+truncation that was not run for that checkpoint (the sweep that produced T
+stopped at $|K|=6$).}
 \label{tab:size}
 \end{table}
 

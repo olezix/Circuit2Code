@@ -275,9 +275,10 @@ tables are transcriptions, not hand measurements.
 
 ```bash
 python scripts/paper_tables.py        # artifacts/paper_tables.json
-python scripts/frequency_budget.py artifacts/checkpoints/g70b.pt:0.7 \
-        artifacts/checkpoints/cos13_60k.pt:0.5
-python scripts/truncation_sweep.py artifacts/checkpoints/g70.pt:0.7 --budget 8
+python scripts/frequency_budget.py artifacts/checkpoints/g70.pt:0.7 \
+        artifacts/checkpoints/add59_cos.pt:0.3 artifacts/checkpoints/cos13_60k.pt:0.5
+python scripts/truncation_sweep.py artifacts/checkpoints/g70.pt --train-fraction 0.7 \
+        --budget 8            # add --no-verify to skip the SMT queries
 ```
 
 ### 9.1 A grokked network, decompiled and proved
