@@ -253,9 +253,9 @@ open("add.c", "w").write(emit_c(synth.program))
 ## 8. Testing
 
 ```bash
-make test          # 111 tests: model, training, probing, circuit discovery, IR,
+make test          # 112 tests: model, training, probing, circuit discovery, IR,
                    # synthesis, Z3, codegen, CLI
-make test-fast     # 104 tests: skips the ones that train a model (marker "slow")
+make test-fast     # 105 tests: skips the ones that train a model (marker "slow")
 ```
 
 `make` uses `.venv/bin/python` when the virtualenv exists and `python3`

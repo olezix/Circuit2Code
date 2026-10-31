@@ -786,7 +786,7 @@ default 128). Each batch is a single \code{SolverFor("QF\_LRA")} call, so the
 solver sees the disjunction over thousands of inputs at once.
 
 \paragraph{Testing.}
-The suite contains 111 tests, including an end-to-end test of the CLI and one of every measurement script. Codegen tests execute the emitted Python and
+The suite contains 112 tests, including an end-to-end test of the CLI and one of every measurement script. Codegen tests execute the emitted Python and
 compile the emitted C with \code{-Werror}, then compare against the IR on the
 complete domain. Verifier tests check enclosure soundness against the float64
 forward pass on every input, and check that a deliberately wrong program is
