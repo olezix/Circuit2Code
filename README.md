@@ -253,9 +253,9 @@ open("add.c", "w").write(emit_c(synth.program))
 ## 8. Testing
 
 ```bash
-make test          # 107 tests: model, training, probing, circuit discovery, IR,
+make test          # 111 tests: model, training, probing, circuit discovery, IR,
                    # synthesis, Z3, codegen, CLI
-make test-fast     # 100 tests: skips the ones that train a model (marker "slow")
+make test-fast     # 104 tests: skips the ones that train a model (marker "slow")
 ```
 
 `make` uses `.venv/bin/python` when the virtualenv exists and `python3`
@@ -273,48 +273,59 @@ tables are transcriptions, not hand measurements.
 
 ```bash
 python scripts/paper_tables.py        # artifacts/paper_tables.json
-python scripts/frequency_budget.py artifacts/checkpoints/add59_cos.pt:0.3 \
+python scripts/frequency_budget.py artifacts/checkpoints/g70b.pt:0.7 \
         artifacts/checkpoints/cos13_60k.pt:0.5
 python scripts/truncation_sweep.py artifacts/checkpoints/add59_cos.pt --budget 6
 ```
 
 ### 9.1 Certified decompilations
 
-`add59_cos.pt` is a one-layer, four-head, `d_model = 128` attention-only model
-(80,768 parameters) trained on 30% of the `59² = 3481` pairs with full-batch
-AdamW at `lr = 1e-2` annealed by a half-cosine schedule and weight decay 1.0 for
-40,000 epochs.
+`g70b.pt` is a one-layer, four-head, `d_model = 128` attention-only model
+(80,768 parameters) trained on 70% of the `59² = 3481` pairs with full-batch
+AdamW at `lr = 1e-2`, half-cosine annealed, weight decay 1.0, 30,000 epochs.
+`add59_cos.pt` is the same recipe on 30% of the data (the grokking-onset run),
+and `add59.pt` is a memorising checkpoint (lr `1e-3`, constant, 40,000 epochs).
 
-| Checkpoint | p | held-out acc. | full-domain acc. | top-3 spectral energy | top frequencies | IR nodes | synthesis | `model_equivalence` | `logit_equivalence` |
-|---|---|---|---|---|---|---|---|---|---|
-| `add59_cos.pt` | 59 | 87.0% | 90.9% | 0.95 – 0.99 | 6, 11, 15 | 5,763 | 13.7 s | proved (3481/3481 inputs) | proved (ε = 1e-4) |
-| `add59.pt` (memoriser) | 59 | 29.5% | 50.2% | 0.27 – 0.43 | 11, 15, 26 | 5,763 | 13.7 s | proved (3481/3481 inputs) | proved (ε = 1e-4) |
-| `cos13_60k.pt` | 13 | 76.5% | 88.2% | 0.99 | 1, 3, 4 | 1,255 | 0.08 s | proved (169/169 inputs) | proved |
-| `cos2.pt` | 23 | 72.5% | 86.2% | 0.90 – 0.96 | 6, 8, 11 | 2,235 | 0.37 s | proved (529/529 inputs) | proved |
-| random `p = 11` | 11 | – | 100% | 1.0 (full basis) | 1 … 5 | 541 | 0.04 s | proved (121/121 inputs) | proved |
+| Checkpoint | p | train frac. | held-out acc. | full-domain acc. | top-3 spectral energy | top frequencies | IR nodes | synthesis | `model_equivalence` | `logit_equivalence` |
+|---|---|---|---|---|---|---|---|---|---|---|
+| `g70b.pt` | 59 | 0.7 | **99.7%** | 99.8% | 0.990 – 0.995 | 15, 22, 28 | 5,763 | 20.9 s | proved (3481/3481) | proved (ε = 1e-4) |
+| `add59_cos.pt` | 59 | 0.3 | 87.0% | 90.9% | 0.948 – 0.989 | 6, 11, 15 | 5,763 | 13.7 s | proved (3481/3481) | proved (ε = 1e-4) |
+| `add59.pt` (memoriser) | 59 | 0.3 | 29.5% | 50.2% | 0.267 – 0.432 | 11, 15, 26 | 5,763 | 13.7 s | proved (3481/3481) | proved (ε = 1e-4) |
+| `cos13_60k.pt` | 13 | 0.5 | 76.5% | 88.2% | 0.987 – 0.992 | 1, 3, 4 | 1,255 | 0.16 s | proved (169/169) | proved |
+| `cos2.pt` | 23 | 0.5 | 72.5% | 86.2% | 0.896 – 0.962 | 6, 8, 11 | 2,235 | 0.64 s | proved (529/529) | proved |
+| random `p = 11` | 11 | – | – | 100% (exact) | 1.0 (full basis) | 1 … 5 | 541 | 0.04 s | proved (121/121) | proved |
 
 The *faithful trigonometric circuit* reproduces the argmax of each of these
 networks on **every** input of its domain, and Z3 certifies that over the whole
 domain. Truncation error of the circuit (score / logit residuals) is
 `4e-14`–`1e-13` in every case; the float32 ↔ float64 deployment gap is
-`3.1e-5` (p=59), `1.4e-4` (p=13), `2.1e-4` (p=23).
+`3.2e-5` (p=59), `1.4e-4` (p=13), `2.1e-4` (p=23).
 
-The spectral statistic separates the two p=59 checkpoints sharply: the
-grokking-in-progress model concentrates 94.8–98.9% of each head's energy in
-three frequencies, the memoriser only 26.7–43.2%. (`CircuitSpec.is_periodic` is
-simply the predicate "every head exceeds 0.90 top-3 concentration", so `cos2.pt`,
-whose worst head sits at 0.896, is reported as non-periodic even though three
-heads exceed 0.95.) That is the quantitative
-version of the "circuits vs. lookup table" distinction, and it is measured, not
-assumed.
+Three statistics separate a network that has learned the algorithm from one that
+has memorised the table:
+
+* **Spectral concentration.** `g70b.pt` puts 99.0–99.5% of each head's spectral
+  energy in three of the 29 frequencies; `add59_cos.pt` 94.8–98.9%; the
+  memoriser only 26.7–43.2%.
+* **Causal load.** Zero-ablating a single head costs 72.5–90.0% accuracy in
+  `g70b.pt` (every head carries distinct work) but only 37.4–39.2% in the
+  memoriser, where the work is redundant.
+* **Top frequency.** In `g70b.pt` every head's dominant frequency is one of
+  `{15, 22, 28}`, i.e. the whole network is built from three Fourier modes; in
+  the memoriser the dominant frequencies differ per head and carry little
+  energy.
+
+(`CircuitSpec.is_periodic` is the predicate "every head exceeds 0.90 top-3
+concentration", so `cos2.pt`, whose worst head sits at 0.896, is reported as
+non-periodic even though three of its heads exceed 0.95.)
 
 ### 9.2 A physical measurement of the emitted code
 
-For `add59_cos.pt`, `circuit2code export` writes a 2.2 MB Python module and a
-2.1 MB C file. The C file
+For `g70b.pt`, `circuit2code export` writes a 2.24 MB Python module and a
+2.12 MB C file. The C file
 
 ```bash
-gcc -std=c99 -O3 -Wall -Wextra -pedantic decompiled_circuit.c -o prog -lm   # 2.7 s, no warnings
+gcc -std=c99 -O3 -Wall -Wextra -pedantic decompiled_circuit.c -o prog -lm   # ~3 s, no warnings
 ```
 
 compiles with an empty diagnostic list and the executable reproduces the Python
@@ -341,22 +352,27 @@ The emitted C is five lines, allocation-free, and compiles under `-Werror`.
 
 ### 9.4 Circuit size versus fidelity
 
-`scripts/truncation_sweep.py` cuts the faithful circuit down to `|K|` frequencies
-per head and re-runs the prover. On `add59_cos.pt`:
+How much of the network does a `|K|`-frequency circuit capture? Building the
+faithful circuit with `max_freqs = K` and comparing its argmax with the
+network's over all 3,481 inputs:
 
-| \|K\| | logit truncation error | `model_equivalence` |
+| `|K|` | `g70b.pt` agreement | `add59_cos.pt` agreement |
 |---|---|---|
-| 1 | 3.4e+01 | refuted |
-| 2 | 2.0e+01 | refuted |
-| 3 | 1.2e+01 | refuted |
-| 6 | 7.0e+00 | refuted |
-| 29 (full) | 2.1e-13 | **proved** |
+| 1 | 24.7% | 10.3% |
+| 2 | 57.1% | 26.3% |
+| 3 | 91.5% | 64.2% |
+| 4 | 99.0% | 80.6% |
+| 5 | 99.7% | 86.2% |
+| 6 | 99.7% | 90.6% |
+| 29 (full basis) | **100.0%** | **100.0%** |
 
-So the tail of the spectrum carries real logit mass in this checkpoint: it is
-*not* the clean sparse circuit of a fully grokked network, which is consistent
-with its 87% held-out accuracy. The same sweep on a network that has fully fit
-the task collapses to a handful of frequencies (see `random p = 11` above, where
-a full basis is *exact*).
+So the network that has learned the algorithm is described *almost* completely
+by five Fourier modes per head --- the same order of magnitude as the textbook
+circuit --- whereas the partially trained one degrades gracefully. Neither is
+exactly described by a truncated basis: because agreement below 100% already
+refutes full-domain equivalence, Z3 only ever *proves* the claim for the full
+basis, where the truncation error is `2×10⁻¹³`. The prover never has to be
+trusted on the approximate rows; they are refuted by counting.
 
 ### 9.5 Robustness, and what the solver actually does
 
@@ -378,13 +394,18 @@ answers to different questions.
 
 ### 9.6 What is *not* claimed
 
-We did not obtain a p = 59 network with 100% held-out accuracy under this
-architecture (no LayerNorm, no MLP) within 40,000 epochs. Consequently the
-discrete-motif path (Section 9.3) is demonstrated on a model whose full domain
-was in the training set, and the *generalization* claim for p = 59 remains an
-extrapolation rather than a measurement. What is measured at p = 59 is that the
-faithful circuit is exact and certified, and that the spectral statistic tracks
-how much of the algorithm the network has actually learned.
+The best p = 59 checkpoint we obtained has 99.7% held-out accuracy --- five
+wrong inputs out of 1,044, not the exact generalisation that "grokking" usually
+means. We did not reach 100% under this architecture (attention-only, no
+LayerNorm, no MLP) despite sweeping training fractions from 0.2 to 1.0, learning
+rates from `3e-4` to `1e-2`, and schedules of 10,000–60,000 epochs. What is
+measured is therefore: (i) the decompiler is exact and certified for every
+network above, including the imperfect ones; (ii) the circuit structure of the
+best network is the Fourier circuit (three dominant modes, 99% of the energy,
+every head essential); (iii) the discrete-motif path (Section 9.3) is
+demonstrated on a network trained on the complete domain, so for p = 59 the
+claim "the network *is* `(a + b) mod 59` on every input" is false by five
+inputs, and we say so.
 
 ## 10. Limitations
 

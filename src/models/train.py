@@ -200,6 +200,7 @@ def train_modular_addition(cfg: TrainConfig = TrainConfig()) -> TrainResult:
     best_loss = math.inf
     grokking_epoch: Optional[int] = None
     grok_hold = 0
+    last_checkpoint_epoch = -10**9
     start = time.time()
     epochs_run = 0
 
@@ -239,8 +240,17 @@ def train_modular_addition(cfg: TrainConfig = TrainConfig()) -> TrainResult:
             if improved:
                 best_acc, best_loss = te_acc, te_loss
                 best_state = {k: v.detach().clone() for k, v in model.state_dict().items()}
-                if cfg.checkpoint_path and cfg.checkpoint_every and epoch % cfg.checkpoint_every == 0:
-                    _write_checkpoint(model, cfg.checkpoint_path, tr_acc, te_acc, grokking_epoch, epoch)
+                # Rate-limit intermediate checkpoints to one per
+                # ``checkpoint_every`` epochs, but never skip an improvement
+                # just because it did not land on a round epoch: an interrupted
+                # run must always leave an inspectable model behind.
+                if cfg.checkpoint_path and cfg.checkpoint_every:
+                    since_last = epoch - last_checkpoint_epoch
+                    if since_last >= cfg.checkpoint_every:
+                        last_checkpoint_epoch = epoch
+                        _write_checkpoint(
+                            model, cfg.checkpoint_path, tr_acc, te_acc, grokking_epoch, epoch
+                        )
 
             if te_acc >= 1.0:
                 grok_hold += 1

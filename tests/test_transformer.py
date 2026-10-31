@@ -295,3 +295,31 @@ def test_gradient_clipping_keeps_training_finite():
     result = train_modular_addition(cfg)
     assert math.isfinite(result.history[-1]["train_loss"])
     assert all(torch.isfinite(w).all().item() for w in result.model.parameters())
+
+
+def test_checkpoint_is_written_even_off_the_round_epoch(tmp_path):
+    """An improvement between two ``checkpoint_every`` boundaries is still saved.
+
+    Regression test: the intermediate checkpoint used to require
+    ``epoch % checkpoint_every == 0`` *and* an improvement at that exact epoch,
+    so a run whose accuracy only improved in between left no checkpoint at all.
+    """
+    out = str(tmp_path / "intermediate.pt")
+    cfg = TrainConfig(
+        p=5,
+        d_model=16,
+        n_heads=2,
+        init_std=0.5,
+        epochs=120,
+        lr=5e-3,
+        eval_every=10,
+        log_every=1000,
+        train_fraction=1.0,
+        seed=0,
+        checkpoint_path=out,
+        checkpoint_every=7,  # deliberately coprime with eval_every
+        verbose=False,
+        torch_threads=1,
+    )
+    train_modular_addition(cfg)
+    assert os.path.exists(out), "no intermediate checkpoint was written"

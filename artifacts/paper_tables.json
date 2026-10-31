@@ -143,13 +143,13 @@
         },
         "full_basis": true,
         "n_readout_parameters": 13924,
-        "seconds": 14.66,
+        "seconds": 19.13,
         "body": "argmax([-1.8440206866265418 + softmax(...)[0] * G0_a(1.0, cos(0.10649466622338281 * a), sin(0.10649466622338281 * a), cos(0.21298933244676563 * a), sin(0.21298933244676563 * a), cos(0.31948399867014843 * a), sin(0.31948399867014843 * a), cos(0.42597866489353126 * a), sin(0.42597866489353126 * a), cos(0.5324733311169141 * a), sin(0.5324733311169141 * a), cos(0.6389679973402969 * a), sin(0.638967997"
       },
       "verification": {
         "verified": true,
         "deployment_gap": 3.7645989694912174e-05,
-        "total_time_s": 102.18,
+        "total_time_s": 128.99,
         "results": [
           {
             "name": "spec",
@@ -179,18 +179,18 @@
         ]
       }
     },
-    "p59_cosine": {
-      "checkpoint": "artifacts/checkpoints/add59_cos.pt",
+    "p59_grok": {
+      "checkpoint": "artifacts/checkpoints/g70b.pt",
       "p": 59,
       "d_model": 128,
       "n_heads": 4,
       "mlp_width": 0,
       "n_params": 80768,
-      "train_fraction": 0.3,
+      "train_fraction": 0.7,
       "accuracy": {
-        "train_accuracy": 1.0,
-        "full_domain_accuracy": 0.9092214703559875,
-        "test_accuracy": 0.8703323602676392
+        "train_accuracy": 0.9979482889175415,
+        "full_domain_accuracy": 0.9977018237113953,
+        "test_accuracy": 0.9971264600753784
       },
       "circuit": {
         "heads": [
@@ -200,107 +200,107 @@
           "L0H3"
         ],
         "shift_residual": {
-          "L0H0": 28.27182308975923,
-          "L0H1": 34.9163465459468,
-          "L0H2": 26.402453672077698,
-          "L0H3": 27.083824719791696
+          "L0H0": 44.05525048380181,
+          "L0H1": 37.976458393921284,
+          "L0H2": 40.82125809233067,
+          "L0H3": 31.998469936645638
         },
         "spectral_energy_top3": {
-          "L0H0": 0.949053019285202,
-          "L0H1": 0.9889173372648656,
-          "L0H2": 0.956089973449707,
-          "L0H3": 0.9483096152544022
+          "L0H0": 0.9945521391928196,
+          "L0H1": 0.9929362796247005,
+          "L0H2": 0.98960792273283,
+          "L0H3": 0.9947864022105932
         },
         "frequencies": [
-          6,
-          11,
-          15
+          15,
+          22,
+          28
         ],
         "is_periodic": true,
         "head_reports": [
           {
             "layer": 0,
             "head": 0,
-            "accuracy_drop": 0.717323,
-            "logit_diff_drop": 2.860937,
+            "accuracy_drop": 0.900316,
+            "logit_diff_drop": 23.505997,
             "top_frequencies": [
               [
-                6,
-                0.387135
-              ],
-              [
-                11,
-                0.368404
+                22,
+                0.923375
               ],
               [
                 15,
-                0.193514
+                0.043183
+              ],
+              [
+                28,
+                0.027994
               ]
             ],
-            "spectral_energy_top3": 0.949053
+            "spectral_energy_top3": 0.994552
           },
           {
             "layer": 0,
             "head": 1,
-            "accuracy_drop": 0.728814,
-            "logit_diff_drop": 11.921203,
+            "accuracy_drop": 0.866705,
+            "logit_diff_drop": 17.729362,
             "top_frequencies": [
               [
+                22,
+                0.896978
+              ],
+              [
+                28,
+                0.059903
+              ],
+              [
                 15,
-                0.973671
-              ],
-              [
-                29,
-                0.009593
-              ],
-              [
-                14,
-                0.005654
+                0.036055
               ]
             ],
-            "spectral_energy_top3": 0.988917
+            "spectral_energy_top3": 0.992936
           },
           {
             "layer": 0,
             "head": 2,
-            "accuracy_drop": 0.738294,
-            "logit_diff_drop": 2.781397,
+            "accuracy_drop": 0.792014,
+            "logit_diff_drop": 13.792747,
             "top_frequencies": [
               [
-                6,
-                0.395365
+                22,
+                0.769748
               ],
               [
-                11,
-                0.352457
+                28,
+                0.17995
               ],
               [
                 15,
-                0.208268
+                0.03991
               ]
             ],
-            "spectral_energy_top3": 0.95609
+            "spectral_energy_top3": 0.989608
           },
           {
             "layer": 0,
             "head": 3,
-            "accuracy_drop": 0.730824,
-            "logit_diff_drop": 2.750965,
+            "accuracy_drop": 0.724504,
+            "logit_diff_drop": 12.719044,
             "top_frequencies": [
               [
-                11,
-                0.387143
+                28,
+                0.919995
               ],
               [
-                6,
-                0.362611
+                22,
+                0.055449
               ],
               [
-                15,
-                0.198555
+                3,
+                0.019343
               ]
             ],
-            "spectral_energy_top3": 0.94831
+            "spectral_energy_top3": 0.994786
           }
         ]
       },
@@ -310,8 +310,8 @@
         "full_domain_accuracy": 1.0,
         "n_nodes": 5763,
         "truncation_error": {
-          "score": 3.597122599785507e-14,
-          "logit": 6.550315845288424e-13
+          "score": 3.375077994860476e-14,
+          "logit": 6.146194664324867e-13
         },
         "frequencies_per_head": {
           "0": 29,
@@ -321,13 +321,13 @@
         },
         "full_basis": true,
         "n_readout_parameters": 13924,
-        "seconds": 14.92,
-        "body": "argmax([-0.6009465723280961 + softmax(...)[0] * G0_a(1.0, cos(0.10649466622338281 * a), sin(0.10649466622338281 * a), cos(0.21298933244676563 * a), sin(0.21298933244676563 * a), cos(0.31948399867014843 * a), sin(0.31948399867014843 * a), cos(0.42597866489353126 * a), sin(0.42597866489353126 * a), cos(0.5324733311169141 * a), sin(0.5324733311169141 * a), cos(0.6389679973402969 * a), sin(0.638967997"
+        "seconds": 20.87,
+        "body": "argmax([0.06989822404937222 + softmax(...)[0] * G0_a(1.0, cos(0.10649466622338281 * a), sin(0.10649466622338281 * a), cos(0.21298933244676563 * a), sin(0.21298933244676563 * a), cos(0.31948399867014843 * a), sin(0.31948399867014843 * a), cos(0.42597866489353126 * a), sin(0.42597866489353126 * a), cos(0.5324733311169141 * a), sin(0.5324733311169141 * a), cos(0.6389679973402969 * a), sin(0.638967997"
       },
       "verification": {
         "verified": true,
-        "deployment_gap": 3.108245766014761e-05,
-        "total_time_s": 100.1,
+        "deployment_gap": 3.192351704939256e-05,
+        "total_time_s": 134.34,
         "results": [
           {
             "name": "spec",
@@ -499,13 +499,13 @@
         },
         "full_basis": true,
         "n_readout_parameters": 2116,
-        "seconds": 0.39,
+        "seconds": 0.64,
         "body": "argmax([-2.0521519588985404 + softmax(...)[0] * G0_a(1.0, cos(0.2731819698773733 * a), sin(0.2731819698773733 * a), cos(0.5463639397547466 * a), sin(0.5463639397547466 * a), cos(0.8195459096321199 * a), sin(0.8195459096321199 * a), cos(1.0927278795094932 * a), sin(1.0927278795094932 * a), cos(1.3659098493868667 * a), sin(1.3659098493868667 * a), cos(1.6390918192642399 * a), sin(1.6390918192642399 "
       },
       "verification": {
         "verified": true,
         "deployment_gap": 0.00020885811289872436,
-        "total_time_s": 1.97,
+        "total_time_s": 3.0,
         "results": [
           {
             "name": "spec",
@@ -677,13 +677,13 @@
         },
         "full_basis": true,
         "n_readout_parameters": 676,
-        "seconds": 0.08,
+        "seconds": 0.16,
         "body": "argmax([-3.1879680385547773 + softmax(...)[0] * G0_a(1.0, cos(0.483321946706122 * a), sin(0.483321946706122 * a), cos(0.966643893412244 * a), sin(0.966643893412244 * a), cos(1.4499658401183662 * a), sin(1.4499658401183662 * a), cos(1.933287786824488 * a), sin(1.933287786824488 * a), cos(2.4166097335306103 * a), sin(2.4166097335306103 * a), cos(2.8999316802367323 * a), sin(2.8999316802367323 * a))["
       },
       "verification": {
         "verified": true,
         "deployment_gap": 0.0001415262295836328,
-        "total_time_s": 0.38,
+        "total_time_s": 0.54,
         "results": [
           {
             "name": "spec",
@@ -719,7 +719,7 @@
       "checkpoint": "artifacts/checkpoints/cos13_60k.pt",
       "slack": 0.001,
       "verified": true,
-      "seconds": 1.13,
+      "seconds": 1.7,
       "results": [
         {
           "name": "spec",
@@ -729,7 +729,7 @@
         {
           "name": "model_equivalence",
           "status": "proved",
-          "detail": "all 169 inputs certified (enclosure-decided: 140, SMT-decided: 29); Z3 discharged 2 queries in 0.073s"
+          "detail": "all 169 inputs certified (enclosure-decided: 140, SMT-decided: 29); Z3 discharged 2 queries in 0.147s"
         },
         {
           "name": "logit_equivalence",
@@ -742,7 +742,7 @@
       "checkpoint": "artifacts/checkpoints/cos13_60k.pt",
       "slack": 0.01,
       "verified": false,
-      "seconds": 4.72,
+      "seconds": 6.94,
       "results": [
         {
           "name": "spec",
