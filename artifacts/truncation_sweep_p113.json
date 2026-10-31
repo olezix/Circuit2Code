@@ -1,0 +1,88 @@
+{
+  "checkpoint": "artifacts/checkpoints/g113.pt",
+  "p": 113,
+  "full_domain_agreement_of_full_basis": 1.0,
+  "rows": [
+    {
+      "max_freqs": 1,
+      "full_basis": false,
+      "score_error": 9.889311591848582e-14,
+      "logit_error": 52.37753119881877,
+      "n_readout_parameters": 1356,
+      "agreement": 0.14582191244420079,
+      "model_equivalence": "refuted-by-counting"
+    },
+    {
+      "max_freqs": 2,
+      "full_basis": false,
+      "score_error": 9.889311591848582e-14,
+      "logit_error": 43.13054813131956,
+      "n_readout_parameters": 2260,
+      "agreement": 0.29563787297360794,
+      "model_equivalence": "refuted-by-counting"
+    },
+    {
+      "max_freqs": 3,
+      "full_basis": false,
+      "score_error": 9.889311591848582e-14,
+      "logit_error": 31.956352473108282,
+      "n_readout_parameters": 3164,
+      "agreement": 0.498864437309108,
+      "model_equivalence": "refuted-by-counting"
+    },
+    {
+      "max_freqs": 4,
+      "full_basis": false,
+      "score_error": 9.889311591848582e-14,
+      "logit_error": 26.982976990341427,
+      "n_readout_parameters": 4068,
+      "agreement": 0.6451562377633331,
+      "model_equivalence": "refuted-by-counting"
+    },
+    {
+      "max_freqs": 5,
+      "full_basis": false,
+      "score_error": 9.889311591848582e-14,
+      "logit_error": 23.898463692797385,
+      "n_readout_parameters": 4972,
+      "agreement": 0.7354530503563318,
+      "model_equivalence": "refuted-by-counting"
+    },
+    {
+      "max_freqs": 6,
+      "full_basis": false,
+      "score_error": 9.889311591848582e-14,
+      "logit_error": 19.06094528780741,
+      "n_readout_parameters": 5876,
+      "agreement": 0.7793092646252643,
+      "model_equivalence": "refuted-by-counting"
+    },
+    {
+      "max_freqs": 7,
+      "full_basis": false,
+      "score_error": 9.889311591848582e-14,
+      "logit_error": 15.733870674810717,
+      "n_readout_parameters": 6780,
+      "agreement": 0.9250528624011277,
+      "model_equivalence": "refuted-by-counting"
+    },
+    {
+      "max_freqs": 8,
+      "full_basis": false,
+      "score_error": 9.889311591848582e-14,
+      "logit_error": 15.66619255334016,
+      "n_readout_parameters": 7684,
+      "agreement": 0.9608426658313102,
+      "model_equivalence": "refuted-by-counting"
+    },
+    {
+      "max_freqs": 56,
+      "full_basis": true,
+      "score_error": 9.889311591848582e-14,
+      "logit_error": 7.460698725481052e-13,
+      "n_readout_parameters": 51076,
+      "agreement": 1.0,
+      "model_equivalence": "not-run"
+    }
+  ]
+}

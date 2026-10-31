@@ -1,132 +1,159 @@
 {
-  "train_fraction": 0.3,
-  "rows": [
-    {
-      "checkpoint": "artifacts/checkpoints/g70.pt",
-      "p": 59,
-      "n_heads": 4,
-      "d_model": 128,
-      "mlp_width": 0,
-      "params": 80768,
-      "test_accuracy": 1.0,
-      "motif": "add_mod",
-      "train_fraction": 0.7,
-      "is_periodic": true,
-      "frequencies_per_head": {},
-      "max_frequencies_per_head": 0,
-      "full_basis": null,
-      "truncation_error": {},
-      "full_domain_agreement": 1.0,
-      "n_nodes": 4,
-      "n_readout_parameters": null
-    },
-    {
-      "checkpoint": "artifacts/checkpoints/add59_cos.pt",
-      "p": 59,
-      "n_heads": 4,
-      "d_model": 128,
-      "mlp_width": 0,
-      "params": 80768,
-      "test_accuracy": 0.870332,
-      "motif": null,
-      "train_fraction": 0.3,
-      "is_periodic": true,
-      "frequencies_per_head": {
-        "0": 29,
-        "1": 29,
-        "2": 29,
-        "3": 29
-      },
-      "max_frequencies_per_head": 29,
-      "full_basis": true,
-      "truncation_error": {
-        "score": 3.597122599785507e-14,
-        "logit": 6.550315845288424e-13
-      },
-      "full_domain_agreement": 1.0,
-      "n_nodes": 5763,
-      "n_readout_parameters": 13924
-    },
-    {
-      "checkpoint": "artifacts/checkpoints/add59.pt",
-      "p": 59,
-      "n_heads": 4,
-      "d_model": 128,
-      "mlp_width": 0,
-      "params": 80768,
-      "test_accuracy": 0.295035,
-      "motif": null,
-      "train_fraction": 0.3,
-      "is_periodic": false,
-      "frequencies_per_head": {
-        "0": 29,
-        "1": 29,
-        "2": 29,
-        "3": 29
-      },
-      "max_frequencies_per_head": 29,
-      "full_basis": true,
-      "truncation_error": {
-        "score": 1.4566126083082054e-13,
-        "logit": 2.0961010704922955e-13
-      },
-      "full_domain_agreement": 1.0,
-      "n_nodes": 5763,
-      "n_readout_parameters": 13924
-    },
-    {
-      "checkpoint": "artifacts/checkpoints/cos13_60k.pt",
-      "p": 13,
-      "n_heads": 4,
-      "d_model": 64,
-      "mlp_width": 0,
-      "params": 18112,
-      "test_accuracy": 0.764706,
-      "motif": null,
-      "train_fraction": 0.5,
-      "is_periodic": true,
-      "frequencies_per_head": {
-        "0": 6,
-        "1": 6,
-        "2": 6,
-        "3": 6
-      },
-      "max_frequencies_per_head": 6,
-      "full_basis": true,
-      "truncation_error": {
-        "score": 1.4654943925052066e-14,
-        "logit": 2.3092638912203256e-13
-      },
-      "full_domain_agreement": 1.0,
-      "n_nodes": 1255,
-      "n_readout_parameters": 676
-    },
-    {
-      "checkpoint": "artifacts/checkpoints/cos2.pt",
-      "p": 23,
-      "n_heads": 4,
-      "d_model": 64,
-      "mlp_width": 0,
-      "params": 19392,
-      "test_accuracy": 0.724528,
-      "motif": null,
-      "train_fraction": 0.5,
-      "is_periodic": false,
-      "frequencies_per_head": {
-        "0": 11,
-        "1": 11,
-        "2": 11,
-        "3": 11
-      },
-      "max_frequencies_per_head": 11,
-      "full_basis": true,
-      "truncation_error": {
-        "score": 2.930988785010413e-14,
-        "logit": 4.831690603168681e-13
-      },
-      "full_domain_agreement": 1.0,
-      "n_nodes": 2235,
-      "n_readout_parameters": 2116
-    }
-  ]
+ "train_fraction": 0.3,
+ "rows": [
+  {
+   "checkpoint": "artifacts/checkpoints/g70.pt",
+   "p": 59,
+   "n_heads": 4,
+   "d_model": 128,
+   "mlp_width": 0,
+   "params": 80768,
+   "test_accuracy": 1.0,
+   "motif": "add_mod",
+   "train_fraction": 0.7,
+   "is_periodic": true,
+   "frequencies_per_head": {},
+   "max_frequencies_per_head": 0,
+   "full_basis": null,
+   "truncation_error": {},
+   "full_domain_agreement": 1.0,
+   "n_nodes": 4,
+   "n_readout_parameters": null
+  },
+  {
+   "checkpoint": "artifacts/checkpoints/add59_cos.pt",
+   "p": 59,
+   "n_heads": 4,
+   "d_model": 128,
+   "mlp_width": 0,
+   "params": 80768,
+   "test_accuracy": 0.870332,
+   "motif": null,
+   "train_fraction": 0.3,
+   "is_periodic": true,
+   "frequencies_per_head": {
+    "0": 29,
+    "1": 29,
+    "2": 29,
+    "3": 29
+   },
+   "max_frequencies_per_head": 29,
+   "full_basis": true,
+   "truncation_error": {
+    "score": 3.597122599785507e-14,
+    "logit": 6.550315845288424e-13
+   },
+   "full_domain_agreement": 1.0,
+   "n_nodes": 5763,
+   "n_readout_parameters": 13924
+  },
+  {
+   "checkpoint": "artifacts/checkpoints/add59.pt",
+   "p": 59,
+   "n_heads": 4,
+   "d_model": 128,
+   "mlp_width": 0,
+   "params": 80768,
+   "test_accuracy": 0.295035,
+   "motif": null,
+   "train_fraction": 0.3,
+   "is_periodic": false,
+   "frequencies_per_head": {
+    "0": 29,
+    "1": 29,
+    "2": 29,
+    "3": 29
+   },
+   "max_frequencies_per_head": 29,
+   "full_basis": true,
+   "truncation_error": {
+    "score": 1.4566126083082054e-13,
+    "logit": 2.0961010704922955e-13
+   },
+   "full_domain_agreement": 1.0,
+   "n_nodes": 5763,
+   "n_readout_parameters": 13924
+  },
+  {
+   "checkpoint": "artifacts/checkpoints/cos13_60k.pt",
+   "p": 13,
+   "n_heads": 4,
+   "d_model": 64,
+   "mlp_width": 0,
+   "params": 18112,
+   "test_accuracy": 0.764706,
+   "motif": null,
+   "train_fraction": 0.5,
+   "is_periodic": true,
+   "frequencies_per_head": {
+    "0": 6,
+    "1": 6,
+    "2": 6,
+    "3": 6
+   },
+   "max_frequencies_per_head": 6,
+   "full_basis": true,
+   "truncation_error": {
+    "score": 1.4654943925052066e-14,
+    "logit": 2.3092638912203256e-13
+   },
+   "full_domain_agreement": 1.0,
+   "n_nodes": 1255,
+   "n_readout_parameters": 676
+  },
+  {
+   "checkpoint": "artifacts/checkpoints/cos2.pt",
+   "p": 23,
+   "n_heads": 4,
+   "d_model": 64,
+   "mlp_width": 0,
+   "params": 19392,
+   "test_accuracy": 0.724528,
+   "motif": null,
+   "train_fraction": 0.5,
+   "is_periodic": false,
+   "frequencies_per_head": {
+    "0": 11,
+    "1": 11,
+    "2": 11,
+    "3": 11
+   },
+   "max_frequencies_per_head": 11,
+   "full_basis": true,
+   "truncation_error": {
+    "score": 2.930988785010413e-14,
+    "logit": 4.831690603168681e-13
+   },
+   "full_domain_agreement": 1.0,
+   "n_nodes": 2235,
+   "n_readout_parameters": 2116
+  },
+  {
+   "checkpoint": "artifacts/checkpoints/g113.pt",
+   "p": 113,
+   "n_heads": 4,
+   "d_model": 128,
+   "mlp_width": 0,
+   "params": 94592,
+   "test_accuracy": 0.998434,
+   "motif": null,
+   "train_fraction": 0.7,
+   "is_periodic": true,
+   "frequencies_per_head": {
+    "0": 56,
+    "1": 56,
+    "2": 56,
+    "3": 56
+   },
+   "max_frequencies_per_head": 56,
+   "full_basis": true,
+   "truncation_error": {
+    "score": 9.889311591848582e-14,
+    "logit": 7.460698725481052e-13
+   },
+   "full_domain_agreement": 1.0,
+   "n_nodes": 11055,
+   "n_readout_parameters": 51076
+  }
+ ]
 }

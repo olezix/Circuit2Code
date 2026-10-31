@@ -323,3 +323,32 @@ def test_checkpoint_is_written_even_off_the_round_epoch(tmp_path):
     )
     train_modular_addition(cfg)
     assert os.path.exists(out), "no intermediate checkpoint was written"
+
+
+def test_intermediate_checkpoint_flushes_history(tmp_path):
+    """An interrupted run must still leave a trajectory next to the weights."""
+    import json
+
+    from src.models.train import TrainConfig, _write_checkpoint, train_modular_addition
+
+    config = TrainConfig(p=5, d_model=16, n_heads=2, epochs=60, eval_every=10,
+                         train_fraction=1.0, seed=42)
+    result = train_modular_addition(config)
+    path = str(tmp_path / "ckpt.pt")
+    _write_checkpoint(
+        result.model,
+        path,
+        result.final_train_acc,
+        result.final_test_acc,
+        result.grokking_epoch,
+        result.epochs_run,
+        config=config,
+        history=result.history,
+        elapsed_s=1.5,
+    )
+    assert os.path.exists(path)
+    payload = json.load(open(path.replace(".pt", ".history.json"), encoding="utf-8"))
+    assert payload["history"] == result.history
+    assert payload["summary"]["final"] is False
+    assert payload["summary"]["epochs_run"] == result.epochs_run
+    assert payload["config"]["p"] == 5

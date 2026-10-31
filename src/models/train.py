@@ -249,7 +249,15 @@ def train_modular_addition(cfg: TrainConfig = TrainConfig()) -> TrainResult:
                     if since_last >= cfg.checkpoint_every:
                         last_checkpoint_epoch = epoch
                         _write_checkpoint(
-                            model, cfg.checkpoint_path, tr_acc, te_acc, grokking_epoch, epoch
+                            model,
+                            cfg.checkpoint_path,
+                            tr_acc,
+                            te_acc,
+                            grokking_epoch,
+                            epoch,
+                            config=cfg,
+                            history=history,
+                            elapsed_s=time.time() - start,
                         )
 
             if te_acc >= 1.0:
@@ -331,7 +339,17 @@ def _write_checkpoint(
     test_acc: float,
     grokking_epoch: Optional[int],
     epoch: int,
+    *,
+    config: Optional[TrainConfig] = None,
+    history: Optional[List[Dict[str, float]]] = None,
+    elapsed_s: float = 0.0,
 ) -> None:
+    """Persist the weights and, when given, the trajectory seen so far.
+
+    The trajectory is flushed with every intermediate checkpoint so that a run
+    that is interrupted (or a machine that dies) still leaves a usable history
+    next to the weights, with ``"summary": {"final": false}``.
+    """
     os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
     model.save(
         path,
@@ -344,6 +362,25 @@ def _write_checkpoint(
             }
         },
     )
+    if config is not None and history is not None:
+        payload = {
+            "config": asdict(config),
+            "summary": {
+                "p": config.p,
+                "lr_schedule": config.lr_schedule,
+                "epochs_run": epoch,
+                "final_train_acc": round(train_acc, 6),
+                "final_test_acc": round(test_acc, 6),
+                "grokking_epoch": grokking_epoch,
+                "elapsed_s": round(elapsed_s, 2),
+                "n_params": model.n_params,
+                "checkpoint_path": path,
+                "final": False,
+            },
+            "history": history,
+        }
+        with open(os.path.splitext(path)[0] + ".history.json", "w", encoding="utf-8") as handle:
+            json.dump(payload, handle, indent=2)
 
 
 def main(argv: Optional[List[str]] = None) -> int:  # pragma: no cover - thin CLI wrapper
