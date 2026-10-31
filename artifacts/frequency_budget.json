@@ -2,31 +2,23 @@
   "train_fraction": 0.3,
   "rows": [
     {
-      "checkpoint": "artifacts/checkpoints/g70b.pt",
+      "checkpoint": "artifacts/checkpoints/g70.pt",
       "p": 59,
       "n_heads": 4,
       "d_model": 128,
       "mlp_width": 0,
       "params": 80768,
-      "test_accuracy": 0.997126,
-      "motif": null,
+      "test_accuracy": 1.0,
+      "motif": "add_mod",
       "train_fraction": 0.7,
       "is_periodic": true,
-      "frequencies_per_head": {
-        "0": 29,
-        "1": 29,
-        "2": 29,
-        "3": 29
-      },
-      "max_frequencies_per_head": 29,
-      "full_basis": true,
-      "truncation_error": {
-        "score": 3.375077994860476e-14,
-        "logit": 6.146194664324867e-13
-      },
+      "frequencies_per_head": {},
+      "max_frequencies_per_head": 0,
+      "full_basis": null,
+      "truncation_error": {},
       "full_domain_agreement": 1.0,
-      "n_nodes": 5763,
-      "n_readout_parameters": 13924
+      "n_nodes": 4,
+      "n_readout_parameters": null
     },
     {
       "checkpoint": "artifacts/checkpoints/add59_cos.pt",

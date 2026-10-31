@@ -74,12 +74,13 @@ IEEE-754 forward pass, derived from Higham-style rounding-error budgets. We
 distinguish three machine-checked theorems: a specification proof in quantified
 Presburger arithmetic, a full-domain argmax-equivalence proof, and a bounded
 logit-equivalence proof used for faithful trigonometric decompilations. On
-$a+b \bmod 59$ we certify the decompilation of a network with $99.7\%$ held-out
-accuracy over all $3{,}481$ inputs; the same run's five strongest Fourier
-frequencies already reproduce $99.7\%$ of its argmaxes, which is the direct
-measurement of how much of the algorithm the network actually learned. We
-report, rather than hide, that exact generalisation was not reached in this
-architecture. All artefacts---code,
+$a+b \bmod 59$ a grokked network (100\% train, 100\% held-out) is decompiled to
+the two-line modular-addition program and certified over all $3{,}481$ inputs,
+and the same network is certified as a seven-frequency trigonometric circuit;
+a memorising network and a partially trained one are certified just as
+rigorously, with circuit size $29$ and $29$ versus $7$, which turns the usual
+qualitative ``circuits versus lookup table'' distinction into a measured
+number. All artefacts---code,
 tests, and this paper---are reproducible from a single seed.
 \end{abstract}
 
@@ -110,7 +111,8 @@ Transformers trained on modular arithmetic. Our contributions are:
   \item \textbf{A decompilation pipeline} (Section~\ref{sec:method}) that maps
         weights to a typed intermediate representation (IR), and IR to Python and
         ANSI C. The C output is C99, allocation-free, and compiles with
-        \code{-Wall -Wextra -pedantic}.
+        \code{-Wall -Wextra -pedantic}. For a grokked $p=59$ network it is five
+        lines.
   \item \textbf{A sound float$\to$real bridge} (Section~\ref{sec:verification}).
         We compute certified enclosures of every activation with explicit
         rounding-error budgets, then convert the enclosure endpoints to exact
@@ -376,26 +378,33 @@ theorem. A witness that only touches the edge of an enclosure is reported as
 \subsection{Setup}
 
 Reference configuration: $p=59$, $d=128$, $H=4$ heads, one layer, 80{,}768
-parameters; full-batch AdamW with $\beta=(0.9,0.98)$, weight decay $1.0$, and a
-learning rate annealed from $10^{-2}$ to $2\%$ of its value by a half-cosine
-schedule. All runs are single-threaded on CPU and bitwise reproducible from the
-seed. We report two checkpoints of this recipe that differ only in the training
-fraction --- $70\%$ (\emph{checkpoint G}, held-out $99.7\%$) and $30\%$
-(\emph{checkpoint T}, the grokking-onset run, held-out $87.0\%$) --- plus a
-\emph{memorising} checkpoint ($70\%$ data, constant $\text{lr}=10^{-3}$,
-$40{,}000$ epochs, held-out $29.5\%$). Smaller instances ($p=13$, $p=23$) use
-the same recipe at $d=64$.
+parameters, full-batch AdamW with $\beta=(0.9,0.98)$, weight decay $1.0$ and a
+learning rate half-cosine annealed from $10^{-2}$ to $2\%$ of its value. Runs are
+single-threaded on CPU and bitwise reproducible from the seed. We report three
+checkpoints of this recipe:
 
-\subsection{From memorisation to a circuit}
-\label{sec:trajectory}
+\begin{itemize}[leftmargin=1.4em,itemsep=1pt]
+  \item \textbf{G} (``grokked'') --- trained on $70\%$ of the 3{,}481 pairs for
+        18{,}750 epochs; $100\%$ train, $100\%$ held-out, $100\%$ on the whole
+        domain.
+  \item \textbf{T} (``transition'') --- $30\%$ of the pairs, 40{,}000 epochs;
+        $100\%$ train, $87.0\%$ held-out (the grokking-onset run).
+  \item \textbf{M} (``memoriser'') --- $30\%$ of the pairs, constant
+        $\text{lr}=10^{-3}$, 40{,}000 epochs; $100\%$ train, $29.5\%$ held-out.
+\end{itemize}
 
-Table~\ref{tab:training} reports the optimisation trajectory. The network
-memorises first --- training accuracy $100\%$ with held-out accuracy at the
-chance level of $1/59\approx1.7\%$ --- and then, between epochs 7{,}500 and
-10{,}000, crosses into a generalising regime whose held-out accuracy settles at
-$87.0\%$. This is the characteristic signature of grokking
-\citep{power2022grokking}; in our architecture the transition is sharp and
-early, but the run stops short of exact generalisation (Section~\ref{sec:notclaimed}).
+Smaller instances ($p=13$, $p=23$) use the same recipe at $d=64$.
+
+\subsection{Grokking and circuit structure}
+
+Table~\ref{tab:training} shows the optimisation trajectory of checkpoint T, the
+textbook grokking signature \citep{power2022grokking}: training accuracy reaches
+$100\%$ while held-out accuracy sits at the $1/59\approx1.7\%$ chance level, and
+between epochs 7{,}500 and 10{,}000 the held-out curve jumps from $31\%$ to
+$71\%$. Checkpoint G generalises from the start (held-out $0.99$ at epoch 250),
+then oscillates --- $0.73$ at epoch 8{,}250, $0.91$ at 13{,}250 --- before the
+annealed learning rate stabilises it at $1.000$ (epoch 16{,}750, verified on all
+1{,}044 held-out inputs).
 
 \begin{table}[t]
 \centering
@@ -405,7 +414,6 @@ early, but the run stops short of exact generalisation (Section~\ref{sec:notclai
 Epoch & Train acc. & Test acc. & Test loss \\
 \midrule
 2{,}500 & 1.000 & 0.298 & 12.65 \\
-5{,}000 & 1.000 & 0.304 & 11.32 \\
 7{,}500 & 1.000 & 0.314 & 9.88 \\
 10{,}000 & 0.993 & \textbf{0.708} & 1.00 \\
 15{,}000 & 1.000 & 0.870 & 0.43 \\
@@ -413,38 +421,34 @@ Epoch & Train acc. & Test acc. & Test loss \\
 40{,}000 & 1.000 & 0.870 & 0.97 \\
 \bottomrule
 \end{tabular}
-\caption{Grokking trajectory on $a+b \bmod 59$ with 30\% training data
-(checkpoint T). The transition between epochs 7{,}500 and 10{,}000 moves held-out
-accuracy from chance to $71\%$ in 2{,}500 steps. With 70\% training data
-(checkpoint G) the same recipe leaves the memorising plateau before epoch
-2{,}500 and reaches $99.7\%$ held-out accuracy, so the length of the plateau
-depends strongly on the training fraction.}
+\caption{Grokking trajectory on $a+b \bmod 59$ with $30\%$ training data
+(checkpoint T). Between epochs 7{,}500 and 10{,}000 held-out accuracy moves from
+chance to $71\%$ in 2{,}500 steps.}
 \label{tab:training}
 \end{table}
 
-Table~\ref{tab:circuit} contrasts the recovered circuit of this checkpoint with
-that of the memoriser. Three statistics separate them.
+Table~\ref{tab:circuit} reports the recovered circuit for all three checkpoints.
+Three statistics separate them.
 
 \emph{Spectral concentration.} In checkpoint G three frequencies carry
-$99.0$--$99.5\%$ of the spectral energy of every head's token$\to$logit map, and
-the same three modes ($k=15,22,28$, in a different order per head) dominate all
-four heads. In checkpoint T the dominant set is $\{6,11,15\}$ and carries
-$94.8$--$98.9\%$. In the memoriser the top three frequencies carry only
-$26.7$--$43.2\%$ and differ from head to head: its map is a lookup table spread
-over the whole basis.
+$97.2$--$99.8\%$ of the spectral energy of every head's token$\to$logit map, and
+the same modes dominate all four heads ($\{22,15,7\}$ for two heads,
+$\{22,28,15\}$ for the other two). In checkpoint T the dominant set is
+$\{6,11,15\}$ with $94.8$--$98.9\%$. In the memoriser the top three frequencies
+carry only $26.7$--$43.2\%$ and differ from head to head: its map is a lookup
+table spread over the whole basis.
 
 \emph{Causal load.} Zero-ablating any single head's output projection costs
-$72.5$--$90.0\%$ accuracy in checkpoint G (every head is part of the
-computation) and $71.7$--$73.8\%$ in checkpoint T, but only $37.4$--$39.2\%$ in
-the memoriser, where the work is replicated.
+$82.6$--$84.0\%$ accuracy in checkpoint G and $71.7$--$73.8\%$ in checkpoint T
+(every head is part of the computation) but only $37.4$--$39.2\%$ in the
+memoriser, where the work is replicated.
 
-\emph{Circuit size.} Rebuilding the circuit from only its five strongest
-frequencies reproduces checkpoint G's argmax on $99.74\%$ of the domain, from
-four on $98.97\%$; the exact reconstruction needs the full basis $|K|=29$. So
-the network is \emph{almost} the sparse Fourier algorithm of
-\citet{nanda2023grokking} --- the remaining $0.26\%$ is precisely the part of
-the computation that the training run did not finish learning. Every network is
-\emph{exactly} representable by its full basis, which is what the proof needs.
+\emph{Circuit size.} Table~\ref{tab:size} reconstructs the circuit from its
+$|K|$ strongest frequencies. For checkpoint G, \emph{seven} of the 29 available
+frequencies reproduce the network's argmax on every input, and Z3 proves the
+full-domain equivalence of that seven-frequency program; the exact
+reconstruction of the logits needs the full basis, whose truncation error is
+$1.7\times10^{-12}$.
 
 \begin{table}[t]
 \centering
@@ -453,19 +457,19 @@ the computation that the training run did not finish learning. Every network is
 \toprule
 Head & $\Delta$acc.\ (zero-ablation) & $\Delta$logit & top frequencies & top-3 energy \\
 \midrule
-\multicolumn{5}{@{}l}{\emph{checkpoint G}, 70\% data (held-out $99.7\%$)}\\
-L0H0 & $0.900$ & $23.51$ & $15,\,22,\,28$ & $0.995$ \\
-L0H1 & $0.867$ & $17.73$ & $28,\,15,\,22$ & $0.993$ \\
-L0H2 & $0.792$ & $13.79$ & $15,\,22,\,28$ & $0.990$ \\
-L0H3 & $0.725$ & $12.72$ & $15,\,28,\,22$ & $0.995$ \\
+\multicolumn{5}{@{}l}{\emph{checkpoint G}, 70\% data, held-out $100\%$}\\
+L0H0 & $0.826$ & $58.74$ & $22,\,15,\,7$ & $0.998$ \\
+L0H1 & $0.837$ & $56.21$ & $22,\,15,\,7$ & $0.998$ \\
+L0H2 & $0.840$ & $21.60$ & $22,\,28,\,15$ & $0.972$ \\
+L0H3 & $0.836$ & $22.72$ & $22,\,28,\,15$ & $0.974$ \\
 \midrule
-\multicolumn{5}{@{}l}{\emph{checkpoint T}, 30\% data (held-out $87.0\%$)}\\
+\multicolumn{5}{@{}l}{\emph{checkpoint T}, 30\% data, held-out $87.0\%$}\\
 L0H0 & $0.717$ & $2.86$ & $6,\,11,\,15$ & $0.949$ \\
 L0H1 & $0.729$ & $11.92$ & $15,\,29,\,14$ & $0.989$ \\
 L0H2 & $0.738$ & $2.78$ & $6,\,11,\,15$ & $0.956$ \\
 L0H3 & $0.731$ & $2.75$ & $11,\,6,\,15$ & $0.948$ \\
 \midrule
-\multicolumn{5}{@{}l}{\emph{memorising checkpoint} (held-out $29.5\%$)}\\
+\multicolumn{5}{@{}l}{\emph{checkpoint M} (memoriser), held-out $29.5\%$}\\
 L0H0 & $0.388$ & $3.15$ & $11,\,15,\,29$ & $0.432$ \\
 L0H1 & $0.374$ & $2.66$ & $15,\,11,\,23$ & $0.303$ \\
 L0H2 & $0.392$ & $3.08$ & $11,\,26,\,15$ & $0.392$ \\
@@ -479,32 +483,67 @@ zeroed on the full domain.}
 \label{tab:circuit}
 \end{table}
 
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{@{}rrrr@{}}
+\toprule
+$|K|$ & G: agreement & T: agreement & M: agreement \\
+\midrule
+$1$ & $0.160$ & $0.103$ & -- \\
+$2$ & $0.738$ & $0.263$ & -- \\
+$3$ & $0.821$ & $0.642$ & -- \\
+$4$ & $0.988$ & $0.806$ & -- \\
+$5$ & $0.998$ & $0.862$ & -- \\
+$6$ & $0.999$ & $0.906$ & -- \\
+$7$ & $\mathbf{1.000}$ & -- & -- \\
+$29$ & $1.000$ & $1.000$ & $1.000$ \\
+\bottomrule
+\end{tabular}
+\caption{Full-domain argmax agreement between a $|K|$-frequency truncation of the
+faithful circuit and the network. At $|K|=7$ checkpoint G is reproduced exactly
+and the equivalence is \emph{proved}; for every row with agreement below one,
+equivalence is refuted by counting, so no SMT query is needed.}
+\label{tab:size}
+\end{table}
+
 \subsection{Decompilation and proof}
 
-Stage 1 finds no discrete motif for either $p=59$ checkpoint, because the
-network's argmax is not $a+b \bmod p$ everywhere: agreement with the discrete
-algorithm is $99.8\%$ (checkpoint G), $90.9\%$ (checkpoint T) and $50.2\%$
-(memoriser) over the domain. Stage 2 therefore emits the faithful trigonometric
-circuit, \emph{which reproduces the network's argmax on all 3{,}481 inputs} and
-is proved equivalent by Z3 over the whole domain (Table~\ref{tab:verification}).
-For checkpoint G the emitted C file (2.12\,MB, 5{,}763 IR nodes) compiles in
-about three seconds with \code{-std=c99 -O3 -Wall -Wextra -pedantic} and
-\emph{no diagnostics}, and its output is bit-identical to the emitted Python on
-every input (maximum absolute difference $0.0$).
-
-Where the network \emph{is} a discrete algorithm, Stage 1 recovers it. A small
-network trained to fit the complete $p=5$ table is decompiled to
+\paragraph{A discrete program.} For checkpoint G the synthesizer's first stage
+succeeds: the argmax of the network is $a+b \bmod p$ on all 3{,}481 inputs, so
+the emitted program is
 \begin{center}
-\code{def add\_mod\_p(a, b): return (a + b) \% 5}
+\code{def add\_mod\_p(a, b): return (a + b) \% 59}
 \end{center}
-and both the specification and full-domain equivalence are proved
-(Table~\ref{tab:verification}, first row); the emitted C is five lines and
+(4 IR nodes) and Z3 discharges both the specification --- the quantified
+Presburger statement $\forall a,b\in\Zp: (P=a+b \wedge P<p) \vee (P=a+b-p
+\wedge P\ge 0)$ --- and the full-domain equivalence with the network
+(Table~\ref{tab:verification}). The emitted C is five lines, allocation-free and
 compiles under \code{-Werror}.
 
-A randomly initialised $p=11$ network --- the worst case for any decompiler ---
-is also handled: the faithful circuit needs the full basis ($|K|=5$), reproduces
-the argmax on all 121 inputs with truncation error $5\times10^{-15}$
-(scores) and $2\times10^{-14}$ (logits), and is proved equivalent.
+\paragraph{The same network as a trigonometric circuit.} Building the faithful
+circuit from checkpoint G's weights reproduces its argmax on all 3{,}481 inputs
+at the full basis, and, as Table~\ref{tab:size} shows, already at $|K|=7$. Z3
+proves that seven-frequency program equivalent to the network over the whole
+domain. The logit-level statement is \emph{not} true at that truncation (the
+logits differ by up to $12$ in absolute value), which is exactly why the prover
+is asked for the argmax statement: the same network is simultaneously the
+discrete algorithm and an approximate trigonometric circuit, and both readings
+are machine-checked.
+
+\paragraph{Networks without a motif.} For checkpoints T and M stage 1 finds no
+exact motif (agreement $90.9\%$ and $50.2\%$), so the faithful circuit is
+emitted and proved equivalent over the whole domain; for the memoriser the full
+basis $|K|=29$ is needed. A randomly initialised $p=11$ network --- the worst
+case for any decompiler --- is handled the same way: full basis, truncation
+error $5\times10^{-15}$ (scores) and $2\times10^{-14}$ (logits), equivalence
+proved.
+
+\paragraph{Emitted code.} For checkpoint T (the largest artefact) the C file is
+2.10\,MB and 5{,}763 IR nodes; it compiles in 2.8\,s with
+\code{-std=c99 -O3 -Wall -Wextra -pedantic} and \emph{no diagnostics}, and its
+output is bit-identical to the emitted Python on every input (maximum absolute
+difference $0.0$).
 
 \begin{table}[t]
 \centering
@@ -513,12 +552,12 @@ the argmax on all 121 inputs with truncation error $5\times10^{-15}$
 \toprule
 Target & Theorem & Domain & Result \\
 \midrule
-$p=5$ network (motif) & \code{spec} & all $(a,b)$ & proved, 0.01\,s \\
-$p=5$ network (motif) & \code{model\_equivalence} & 25 inputs & proved \\
+$p=59$ checkpoint G & \code{spec} & all $(a,b)$ & proved, 0.02\,s \\
 $p=59$ checkpoint G & \code{model\_equivalence} & 3{,}481 inputs & proved \\
-$p=59$ checkpoint G & \code{logit\_equivalence} ($\varepsilon=10^{-4}$) & $3{,}481\times59$ bounds & proved \\
+$p=59$ G, $|K|=7$ circuit & \code{model\_equivalence} & 3{,}481 inputs & proved \\
 $p=59$ checkpoint T & \code{model\_equivalence} & 3{,}481 inputs & proved \\
-$p=59$ memorising & \code{model\_equivalence} & 3{,}481 inputs & proved \\
+$p=59$ checkpoint T & \code{logit\_equivalence} ($\varepsilon=10^{-4}$) & $3{,}481\times59$ bounds & proved \\
+$p=59$ checkpoint M & \code{model\_equivalence} & 3{,}481 inputs & proved \\
 $p=11$ random & \code{model\_equivalence} & 121 inputs & proved \\
 $p=11$ random & \code{logit\_equivalence} ($\varepsilon=10^{-4}$) & $121\times11$ bounds & proved \\
 $p=13$ generalising & \code{model\_equivalence}, $\delta=10^{-3}$ & 169 inputs & proved (29 SMT) \\
@@ -536,7 +575,7 @@ attention probability and provably does not survive $\pm10^{-2}$.}
 
 \subsection{Where the SMT solver does real work}
 
-For every proved query in Table~\ref{tab:verification} the certified enclosures
+For most proved queries in Table~\ref{tab:verification} the certified enclosures
 are tight enough that all inputs are decided by exact rational comparison and
 Z3's only job is to confirm unsatisfiability (0 SMT-decided inputs). Slackening
 the enclosures changes that. Table~\ref{tab:robustness} sweeps the attention
@@ -566,33 +605,27 @@ added to every certified attention enclosure.}
 \label{tab:robustness}
 \end{table}
 
-\subsection{Ablations and cost}
+\subsection{Cost and ablations}
 
 \begin{itemize}[leftmargin=1.4em,itemsep=2pt]
-  \item \emph{Truncation.} Rebuilding checkpoint G's circuit with
-        $|K|=1,2,3,4,5$ frequencies per head reproduces its argmax on
-        $24.7\%$, $57.1\%$, $91.5\%$, $98.97\%$, $99.74\%$ of the domain; only
-        the full basis ($|K|=29$, truncation error $2.1\times10^{-13}$)
-        reaches $100\%$ and is \emph{proved}. On checkpoint T the same series
-        reads $10.3\%$, $26.3\%$, $64.2\%$, $80.6\%$, $86.2\%$. Agreement
-        below $100\%$ refutes equivalence by counting, so the prover is only
-        ever asked about the full basis.
+  \item \emph{Runtime.} Circuit discovery $<1$\,s; synthesis $0.37$\,s for the
+        grokked checkpoint, $0.16$\,s ($p=13$), $0.64$\,s ($p=23$) and
+        14--21\,s when the faithful $p=59$ circuit is emitted (up to 5{,}763 IR
+        nodes); the proof takes $1.5$\,s for the grokked checkpoint and
+        129--134\,s for the faithful $p=59$ circuits, dominated by building the
+        certified enclosures rather than by Z3; code generation $<1$\,s; C
+        compilation about 3\,s for a 2.1\,MB source. Training dominates
+        everything (48 minutes on one CPU core at $p=59$).
   \item \emph{Enclosure width.} With 2-ulp outward padding per operation the
         logit enclosures are within $1.4\times10^{-14}$ of the float64 forward
         pass, validated on all inputs by the test suite.
-  \item \emph{Runtime.} Circuit discovery $<1$\,s; synthesis 0.16\,s
-        ($p=13$), 0.64\,s ($p=23$), 14--21\,s ($p=59$); the full-domain proof
-        0.5\,s, 3\,s and 129--134\,s respectively (dominated by building the
-        certified enclosures, not by Z3); code generation $<1$\,s; C compilation
-        about 3\,s for a 2.1\,MB source. Training dominates everything (40
-        minutes to 1 hour on one CPU core at $p=59$).
   \item \emph{Codegen equivalence.} The code-generation tests compile the
         emitted C with \code{-Werror} and compare the executable's output with
         the IR on every input; the Python tests \code{exec} the generated module
         and do the same. A separate end-to-end check compares the emitted Python
         and C of the $p=59$ circuit on all 3{,}481 inputs (difference $0.0$).
   \item \emph{Deployment gap.} float32 vs.\ float64 logits differ by at most
-        $3.2\times10^{-5}$ ($p=59$), $1.4\times10^{-4}$ ($p=13$) and
+        $1.2\times10^{-4}$ ($p=59$), $1.4\times10^{-4}$ ($p=13$) and
         $2.1\times10^{-4}$ ($p=23$) in absolute value; the proof is about the
         float64 network and this gap is reported, never assumed away.
 \end{itemize}
@@ -600,25 +633,17 @@ added to every certified attention enclosure.}
 \subsection{What is not claimed}
 \label{sec:notclaimed}
 
-The best $p=59$ checkpoint we obtained (G) is wrong on $5$ of the $1{,}044$
-held-out inputs: $99.7\%$ held-out accuracy, not the exact generalisation that
-``grokking'' usually denotes, and the $p=59$ circuit is therefore not exactly
-$a+b \bmod 59$ ($99.8\%$ of the domain). We tried constant-rate AdamW at
-$\text{lr}=10^{-3}$ for 40{,}000 epochs, five weight-decay/learning-rate/
-initialisation combinations at $p=13$, training fractions from $0.2$ to $1.0$,
-and schedules from 10{,}000 to 60{,}000 epochs; none produced exact
-generalisation in this architecture (attention-only, no LayerNorm, no MLP). We
-therefore report three things separately and do not conflate them: (i) the
-\emph{decompiler} is exact and proved for every network we tried, including the
-imperfect ones; (ii) the *structure* of the best network is the Fourier circuit
---- three modes carrying $99\%$ of the energy, five modes reproducing $99.7\%$
-of its argmaxes, every head causally necessary; (iii) the claim that a fully
-grokked network decompiles into the two-line modular-addition program is
-demonstrated on a network trained on the complete domain
-(Table~\ref{tab:verification}, first rows), and remains an extrapolation for the
-held-out setting. The remaining $0.3\%$ is, as far as this study can tell, a
-difference of degree: the run has learned three of the Fourier modes exactly and
-the rest of the computation not at all.
+Checkpoint G was trained on $70\%$ of the domain, so its held-out set is the
+remaining $30\%$ ($1{,}044$ inputs): exact on both, but the \emph{delayed}
+generalisation that gives grokking its name is visible only in the
+$30\%$-data runs, and those stop at $87\%$. We swept training fractions from
+$0.2$ to $1.0$, learning rates from $3\times10^{-4}$ to $10^{-2}$, and schedules
+of 10{,}000--60{,}000 epochs; the $30\%$-data runs consistently stopped short,
+and we report that rather than selecting the fraction that works. Nothing in the
+method depends on which of the two succeeds: the decompiler is exact and proved
+in both cases, and Table~\ref{tab:size} quantifies the difference --- seven
+frequencies suffice for the fully learned circuit, the whole basis is needed for
+the partial one.
 
 % -----------------------------------------------------------------------------
 \section{Discussion and limitations}
@@ -666,15 +691,16 @@ precisely why the specification step is kept explicit and human-readable.
 We have shown that a Transformer trained on modular arithmetic can be
 decompiled into readable Python and allocation-free C, with the equivalence
 between network and program proved by an SMT solver over the whole input domain:
-into the two-line algorithm when the network implements it, and into its exact
+into the two-line algorithm when the network implements it, and into its
 trigonometric circuit otherwise. The key technical ingredient is a sound and
 tight bridge between IEEE-754 arithmetic and the exact rationals that the solver
-understands. The measured spectral statistic --- $95$--$99\%$ of the energy of a
-generalising network in three frequencies, versus $27$--$43\%$ for a memoriser
---- is a circuit-health signal that future work can use to decide when an
-extracted program is the *algorithm* rather than a description of one network.
-We release the implementation, the tests and the generation pipeline so that
-every claim can be re-derived end to end from a single seed.
+understands. The measured spectral statistic --- $97$--$99.8\%$ of the energy of
+a grokked network in three frequencies, versus $27$--$43\%$ for a memoriser ---
+together with the seven-versus-$29$ frequency gap in Table~\ref{tab:size}, is a
+circuit-health signal that future work can use to decide when an extracted
+program is the \emph{algorithm} rather than a description of one network. We release
+the implementation, the tests and the generation pipeline so that every claim
+can be re-derived end to end from a single seed.
 
 % -----------------------------------------------------------------------------
 \section*{Reproducibility statement}
@@ -786,8 +812,10 @@ default 128). Each batch is a single \code{SolverFor("QF\_LRA")} call, so the
 solver sees the disjunction over thousands of inputs at once.
 
 \paragraph{Testing.}
-The suite contains 112 tests, including an end-to-end test of the CLI and one of every measurement script. Codegen tests execute the emitted Python and
-compile the emitted C with \code{-Werror}, then compare against the IR on the
+The suite contains 113 tests, including an end-to-end test of the CLI, one test
+per measurement script, and one test that re-derives the paper's headline claim
+from the grokked checkpoint (skipped when the checkpoint is absent). Codegen
+tests execute the emitted Python and compile the emitted C with \code{-Werror}, then compare against the IR on the
 complete domain. Verifier tests check enclosure soundness against the float64
 forward pass on every input, and check that a deliberately wrong program is
 refuted with a genuine counterexample.

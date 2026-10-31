@@ -176,7 +176,7 @@ def main(argv=None) -> int:
     payload: dict = {"generated_by": "scripts/paper_tables.py", "rows": {}, "extra": {}}
     specs = {
         "p59_memoriser": ("add59.pt", 0.3),
-        "p59_grok": ("g70b.pt", 0.7),
+        "p59_grok": ("g70.pt", 0.7),
         "p23_cosine": ("cos2.pt", 0.5),
         "p13_cosine": ("cos13_60k.pt", 0.5),
     }

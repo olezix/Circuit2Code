@@ -284,3 +284,50 @@ def test_attention_slack_pruning_radius_is_tight():
     assert tight._max_logit_span(tight.bounds()) == 0.0
     span = loose._max_logit_span(loose.bounds())
     assert 0.0 < span < 1e4  # finite, and far below slack * p * H * max|M|
+
+
+@pytest.mark.slow
+def test_reference_grokked_checkpoint_decompiles_to_the_algorithm():
+    """The paper's headline claim, as a test.
+
+    Requires ``artifacts/checkpoints/g70.pt`` (48 minutes on one CPU core):
+
+        python demo/cli.py train --p 59 --epochs 30000 --lr-schedule cosine \\
+            --train-fraction 0.7 --seed 3 --out artifacts/checkpoints/g70.pt
+
+    If the checkpoint is absent the test is skipped, so the suite stays runnable
+    everywhere; when present, it asserts exactly what the paper asserts.
+    """
+    import os
+
+    from src.interpretability import extract_circuit
+    from src.synthesis import synthesize
+    from src.verification import Verifier
+
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    path = os.path.join(root, "artifacts", "checkpoints", "g70.pt")
+    if not os.path.exists(path):
+        pytest.skip("reference grokked checkpoint missing")
+
+    model = Transformer.load(path)
+    dataset = modular_addition_dataset(59, train_fraction=0.7, seed=3)
+    with torch.no_grad():
+        logits = model(dataset["tokens"])[0][:, model.config.answer_position, :]
+        held_out = dataset["test_idx"]
+        accuracy = float(
+            (logits[held_out].argmax(-1) == dataset["target"][held_out]).float().mean()
+        )
+    assert accuracy == 1.0
+
+    circuit = extract_circuit(model, dataset)
+    result = synthesize(model, dataset, circuit=circuit)
+    assert result.motif == "add_mod"
+    assert result.program.body.render() == "((a + b) % 59)"
+    assert result.full_domain_accuracy == 1.0
+    assert all(head.spectral_energy_top3 > 0.95 for head in circuit.heads)
+
+    report = Verifier(model, result.program, VerifyConfig()).verify_all()
+    assert report.verified
+    statuses = {r.name: r.status for r in report.results}
+    assert statuses["spec"] == "proved"
+    assert statuses["model_equivalence"] == "proved"

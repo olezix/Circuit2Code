@@ -63,7 +63,9 @@ def measure(path: str, train_fraction: float, seed: int) -> dict:
         "train_fraction": train_fraction,
         "is_periodic": circuit.is_periodic,
         "frequencies_per_head": {k: len(v) for k, v in freqs.items()},
-        "max_frequencies_per_head": max((len(v) for v in freqs.values()), default=0),
+        "max_frequencies_per_head": max((len(v) for v in freqs.values()), default=0)
+        if freqs
+        else None,  # None for a discrete motif: no frequencies were needed
         "full_basis": provenance.get("full_basis"),
         "truncation_error": {
             k: float(v) for k, v in provenance.get("truncation_error", {}).items()
@@ -104,7 +106,8 @@ def main(argv=None) -> int:
             f"{os.path.basename(row['checkpoint']):38s} {row['p']:3d} "
             f"{row['train_fraction']:5.2f} {row['test_accuracy']:6.3f} "
             f"{str(row['is_periodic']):>8s} "
-            f"{row['max_frequencies_per_head']:4d} {row['n_nodes']:6d} "
+            f"{(row['max_frequencies_per_head'] if row['max_frequencies_per_head'] is not None else 0):4d} "
+            f"{row['n_nodes']:6d} "
             f"{row['full_domain_agreement']:6.3f}"
         )
     if args.out:

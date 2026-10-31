@@ -143,13 +143,13 @@
         },
         "full_basis": true,
         "n_readout_parameters": 13924,
-        "seconds": 19.13,
+        "seconds": 15.7,
         "body": "argmax([-1.8440206866265418 + softmax(...)[0] * G0_a(1.0, cos(0.10649466622338281 * a), sin(0.10649466622338281 * a), cos(0.21298933244676563 * a), sin(0.21298933244676563 * a), cos(0.31948399867014843 * a), sin(0.31948399867014843 * a), cos(0.42597866489353126 * a), sin(0.42597866489353126 * a), cos(0.5324733311169141 * a), sin(0.5324733311169141 * a), cos(0.6389679973402969 * a), sin(0.638967997"
       },
       "verification": {
         "verified": true,
         "deployment_gap": 3.7645989694912174e-05,
-        "total_time_s": 128.99,
+        "total_time_s": 98.56,
         "results": [
           {
             "name": "spec",
@@ -180,7 +180,7 @@
       }
     },
     "p59_grok": {
-      "checkpoint": "artifacts/checkpoints/g70b.pt",
+      "checkpoint": "artifacts/checkpoints/g70.pt",
       "p": 59,
       "d_model": 128,
       "n_heads": 4,
@@ -188,9 +188,9 @@
       "n_params": 80768,
       "train_fraction": 0.7,
       "accuracy": {
-        "train_accuracy": 0.9979482889175415,
-        "full_domain_accuracy": 0.9977018237113953,
-        "test_accuracy": 0.9971264600753784
+        "train_accuracy": 1.0,
+        "full_domain_accuracy": 1.0,
+        "test_accuracy": 1.0
       },
       "circuit": {
         "heads": [
@@ -200,16 +200,16 @@
           "L0H3"
         ],
         "shift_residual": {
-          "L0H0": 44.05525048380181,
-          "L0H1": 37.976458393921284,
-          "L0H2": 40.82125809233067,
-          "L0H3": 31.998469936645638
+          "L0H0": 98.13514453071659,
+          "L0H1": 128.92742312156548,
+          "L0H2": 98.65436177334543,
+          "L0H3": 100.2658466565407
         },
         "spectral_energy_top3": {
-          "L0H0": 0.9945521391928196,
-          "L0H1": 0.9929362796247005,
-          "L0H2": 0.98960792273283,
-          "L0H3": 0.9947864022105932
+          "L0H0": 0.9977254378609359,
+          "L0H1": 0.9980473188916221,
+          "L0H2": 0.9722988158464432,
+          "L0H3": 0.9741446673870087
         },
         "frequencies": [
           15,
@@ -221,119 +221,111 @@
           {
             "layer": 0,
             "head": 0,
-            "accuracy_drop": 0.900316,
-            "logit_diff_drop": 23.505997,
+            "accuracy_drop": 0.826199,
+            "logit_diff_drop": 58.737419,
             "top_frequencies": [
               [
                 22,
-                0.923375
+                0.966272
               ],
               [
                 15,
-                0.043183
+                0.028965
               ],
               [
-                28,
-                0.027994
+                7,
+                0.002489
               ]
             ],
-            "spectral_energy_top3": 0.994552
+            "spectral_energy_top3": 0.997725
           },
           {
             "layer": 0,
             "head": 1,
-            "accuracy_drop": 0.866705,
-            "logit_diff_drop": 17.729362,
+            "accuracy_drop": 0.836541,
+            "logit_diff_drop": 56.209984,
             "top_frequencies": [
               [
                 22,
-                0.896978
-              ],
-              [
-                28,
-                0.059903
+                0.972842
               ],
               [
                 15,
-                0.036055
+                0.023265
+              ],
+              [
+                7,
+                0.001941
               ]
             ],
-            "spectral_energy_top3": 0.992936
+            "spectral_energy_top3": 0.998047
           },
           {
             "layer": 0,
             "head": 2,
-            "accuracy_drop": 0.792014,
-            "logit_diff_drop": 13.792747,
+            "accuracy_drop": 0.840276,
+            "logit_diff_drop": 21.60495,
             "top_frequencies": [
               [
                 22,
-                0.769748
+                0.636518
               ],
               [
                 28,
-                0.17995
+                0.274325
               ],
               [
                 15,
-                0.03991
+                0.061456
               ]
             ],
-            "spectral_energy_top3": 0.989608
+            "spectral_energy_top3": 0.972299
           },
           {
             "layer": 0,
             "head": 3,
-            "accuracy_drop": 0.724504,
-            "logit_diff_drop": 12.719044,
+            "accuracy_drop": 0.836254,
+            "logit_diff_drop": 22.720901,
             "top_frequencies": [
               [
-                28,
-                0.919995
-              ],
-              [
                 22,
-                0.055449
+                0.633379
               ],
               [
-                3,
-                0.019343
+                28,
+                0.276801
+              ],
+              [
+                15,
+                0.063964
               ]
             ],
-            "spectral_energy_top3": 0.994786
+            "spectral_energy_top3": 0.974145
           }
         ]
       },
       "synthesis": {
-        "motif": null,
-        "is_faithful_fallback": true,
+        "motif": "add_mod",
+        "is_faithful_fallback": false,
         "full_domain_accuracy": 1.0,
-        "n_nodes": 5763,
-        "truncation_error": {
-          "score": 3.375077994860476e-14,
-          "logit": 6.146194664324867e-13
-        },
-        "frequencies_per_head": {
-          "0": 29,
-          "1": 29,
-          "2": 29,
-          "3": 29
-        },
-        "full_basis": true,
-        "n_readout_parameters": 13924,
-        "seconds": 20.87,
-        "body": "argmax([0.06989822404937222 + softmax(...)[0] * G0_a(1.0, cos(0.10649466622338281 * a), sin(0.10649466622338281 * a), cos(0.21298933244676563 * a), sin(0.21298933244676563 * a), cos(0.31948399867014843 * a), sin(0.31948399867014843 * a), cos(0.42597866489353126 * a), sin(0.42597866489353126 * a), cos(0.5324733311169141 * a), sin(0.5324733311169141 * a), cos(0.6389679973402969 * a), sin(0.638967997"
+        "n_nodes": 4,
+        "truncation_error": null,
+        "frequencies_per_head": {},
+        "full_basis": null,
+        "n_readout_parameters": null,
+        "seconds": 0.37,
+        "body": "((a + b) % 59)"
       },
       "verification": {
         "verified": true,
-        "deployment_gap": 3.192351704939256e-05,
-        "total_time_s": 134.34,
+        "deployment_gap": 0.00011829820155639936,
+        "total_time_s": 1.49,
         "results": [
           {
             "name": "spec",
-            "status": "skipped",
-            "detail": "the program is not expressible in integer arithmetic: node ArgMax has no exact SMT translation",
-            "solver_time_s": 0.0,
+            "status": "proved",
+            "detail": "Z3 proved \u00ac(\u2203 counterexample) in 0.022s ({'num checks': 1.0, 'num allocs': 615937.0, 'rlimit count': 104696.0, 'max memory': 19.86, 'memory': 18.86, 'time': 0.021})",
+            "solver_time_s": 0.0218,
             "statistics": {}
           },
           {
@@ -346,13 +338,6 @@
               "inputs_enclosure_certified": 3481.0,
               "inputs_smt": 0.0
             }
-          },
-          {
-            "name": "logit_equivalence",
-            "status": "proved",
-            "detail": "exact rational comparison of 205379 certified logit bounds; no SMT query required",
-            "solver_time_s": 0.0,
-            "statistics": {}
           }
         ]
       }
@@ -499,13 +484,13 @@
         },
         "full_basis": true,
         "n_readout_parameters": 2116,
-        "seconds": 0.64,
+        "seconds": 0.39,
         "body": "argmax([-2.0521519588985404 + softmax(...)[0] * G0_a(1.0, cos(0.2731819698773733 * a), sin(0.2731819698773733 * a), cos(0.5463639397547466 * a), sin(0.5463639397547466 * a), cos(0.8195459096321199 * a), sin(0.8195459096321199 * a), cos(1.0927278795094932 * a), sin(1.0927278795094932 * a), cos(1.3659098493868667 * a), sin(1.3659098493868667 * a), cos(1.6390918192642399 * a), sin(1.6390918192642399 "
       },
       "verification": {
         "verified": true,
         "deployment_gap": 0.00020885811289872436,
-        "total_time_s": 3.0,
+        "total_time_s": 2.03,
         "results": [
           {
             "name": "spec",
@@ -677,13 +662,13 @@
         },
         "full_basis": true,
         "n_readout_parameters": 676,
-        "seconds": 0.16,
+        "seconds": 0.09,
         "body": "argmax([-3.1879680385547773 + softmax(...)[0] * G0_a(1.0, cos(0.483321946706122 * a), sin(0.483321946706122 * a), cos(0.966643893412244 * a), sin(0.966643893412244 * a), cos(1.4499658401183662 * a), sin(1.4499658401183662 * a), cos(1.933287786824488 * a), sin(1.933287786824488 * a), cos(2.4166097335306103 * a), sin(2.4166097335306103 * a), cos(2.8999316802367323 * a), sin(2.8999316802367323 * a))["
       },
       "verification": {
         "verified": true,
         "deployment_gap": 0.0001415262295836328,
-        "total_time_s": 0.54,
+        "total_time_s": 0.4,
         "results": [
           {
             "name": "spec",
@@ -719,7 +704,7 @@
       "checkpoint": "artifacts/checkpoints/cos13_60k.pt",
       "slack": 0.001,
       "verified": true,
-      "seconds": 1.7,
+      "seconds": 1.1,
       "results": [
         {
           "name": "spec",
@@ -729,7 +714,7 @@
         {
           "name": "model_equivalence",
           "status": "proved",
-          "detail": "all 169 inputs certified (enclosure-decided: 140, SMT-decided: 29); Z3 discharged 2 queries in 0.147s"
+          "detail": "all 169 inputs certified (enclosure-decided: 140, SMT-decided: 29); Z3 discharged 2 queries in 0.073s"
         },
         {
           "name": "logit_equivalence",
@@ -742,7 +727,7 @@
       "checkpoint": "artifacts/checkpoints/cos13_60k.pt",
       "slack": 0.01,
       "verified": false,
-      "seconds": 6.94,
+      "seconds": 4.41,
       "results": [
         {
           "name": "spec",

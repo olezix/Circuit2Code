@@ -28,29 +28,44 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.interpretability import extract_circuit  # noqa: E402
 from src.models.transformer import Transformer, modular_addition_dataset  # noqa: E402
-from src.synthesis import build_fourier_circuit, synthesize  # noqa: E402
+from src.synthesis import build_fourier_circuit, model_predictions, synthesize  # noqa: E402
+from src.synthesis.program_synthesizer import evaluate_program_on_domain  # noqa: E402
 from src.verification import Verifier, VerifyConfig  # noqa: E402
 
 
-def sweep(path: str, budget: int, train_fraction: float, seed: int = 42) -> dict:
+def sweep(
+    path: str,
+    budget: int,
+    train_fraction: float,
+    seed: int = 42,
+    verify: bool = True,
+) -> dict:
     model = Transformer.load(path)
     p = model.config.p
     dataset = modular_addition_dataset(p, train_fraction=train_fraction, seed=seed)
     circuit = extract_circuit(model, dataset)
     full = synthesize(model, dataset, circuit=circuit)
-    predictions = None
+    predictions = model_predictions(model, p)
+    budgets = list(range(1, budget + 1))
+    if p // 2 not in budgets:
+        budgets.append(p // 2)  # the full basis, for reference
     rows = []
-    for max_freqs in range(1, budget + 1):
+    for max_freqs in budgets:
         program = build_fourier_circuit(model, circuit, max_freqs=max_freqs)
         provenance = program.provenance
         tr = provenance["truncation_error"]
-        agreement = None
+        agreement = float(
+            (evaluate_program_on_domain(program, p) == predictions).mean()
+        )
         verdict = "not-run"
-        if max_freqs <= 6 or max_freqs == budget:
+        if verify and agreement == 1.0:
+            # Only an exactly-agreeing truncation can be *proved*; anything less
+            # is refuted by counting and needs no solver.
             report = Verifier(model, program, VerifyConfig()).verify_all()
             equivalent = [r for r in report.results if r.name == "model_equivalence"][0]
             verdict = equivalent.status
-            agreement = None
+        elif agreement < 1.0:
+            verdict = "refuted-by-counting"
         rows.append(
             {
                 "max_freqs": max_freqs,
@@ -58,12 +73,13 @@ def sweep(path: str, budget: int, train_fraction: float, seed: int = 42) -> dict
                 "score_error": float(tr["score"]),
                 "logit_error": float(tr["logit"]),
                 "n_readout_parameters": provenance["n_readout_parameters"],
+                "agreement": agreement,
                 "model_equivalence": verdict,
             }
         )
         print(
-            f"  |K|={max_freqs:2d}  score err {tr['score']:.3e}  logit err {tr['logit']:.3e}  "
-            f"{verdict}",
+            f"  |K|={max_freqs:2d}  agreement {agreement:6.4f}  "
+            f"score err {tr['score']:.3e}  logit err {tr['logit']:.3e}  {verdict}",
             flush=True,
         )
     return {
@@ -81,12 +97,19 @@ def main(argv=None) -> int:
     parser.add_argument("--train-fraction", type=float, default=0.3)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--out", default=None)
+    parser.add_argument(
+        "--no-verify",
+        action="store_true",
+        help="measure agreement only (no SMT query); much faster",
+    )
     args = parser.parse_args(argv)
 
     model = Transformer.load(args.checkpoint)
     budget = args.budget or model.config.p // 2
     print(f"sweeping {args.checkpoint} (p={model.config.p}) up to |K|={budget}")
-    payload = sweep(args.checkpoint, budget, args.train_fraction, args.seed)
+    payload = sweep(
+        args.checkpoint, budget, args.train_fraction, args.seed, verify=not args.no_verify
+    )
     if args.out:
         os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
         with open(args.out, "w", encoding="utf-8") as handle:

@@ -52,9 +52,19 @@ def test_truncation_sweep_reports_monotone_errors(checkpoint, tmp_path):
                                   "--out", str(out)]) == 0
     payload = json.loads(out.read_text())
     rows = payload["rows"]
-    assert [r["max_freqs"] for r in rows] == [1]
-    assert rows[0]["logit_error"] >= 0.0
-    assert rows[0]["model_equivalence"] in {"proved", "refuted", "unknown", "skipped"}
+    # The full basis (p // 2 = 2 for p=5) is always appended for reference.
+    assert [r["max_freqs"] for r in rows] == [1, 2]
+    assert all(r["logit_error"] >= 0.0 for r in rows)
+    assert rows[-1]["agreement"] == 1.0  # the full basis is exact
+    assert rows[0]["agreement"] <= 1.0
+    assert rows[0]["model_equivalence"] in {
+        "proved",
+        "refuted",
+        "unknown",
+        "skipped",
+        "refuted-by-counting",
+        "not-run",
+    }
 
 
 def test_paper_tables_analyse_random_network(checkpoint):
