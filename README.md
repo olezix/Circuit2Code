@@ -308,7 +308,7 @@ The emitted C is five lines, allocation-free, and compiles under
 circuit* built from the same weights is also exactly equivalent, and — this is
 the paper's central quantitative claim — a **7-frequency** truncation of it
 still reproduces the network's argmax on all 3481 inputs and is **proved
-equivalent by Z3** (Table in §9.4).
+equivalent by Z3** (Table in §9.5).
 
 ### 9.2 Other checkpoints: how the statistic tracks the algorithm
 
@@ -373,19 +373,25 @@ with the network's over all 3,481 inputs:
 | 5 | 99.83% | 1.7e+01 | – |
 | 6 | 99.94% | 1.3e+01 | – |
 | 7 | **100.00%** | 1.2e+01 | **proved** (3481/3481 inputs) |
+| 8 | 100.00% | 1.1e+01 | proved |
+| 10 | 100.00% | 7.6e+00 | not queried |
+| 12 | 100.00% | 7.0e+00 | not queried |
 | 29 (full basis) | 100.00% | 1.7e-12 | proved |
 
 | `|K|` | `add59_cos.pt` (87% held-out) agreement | `add59.pt` (memoriser) agreement |
 |---|---|---|
 | 1 | 10.3% | – |
+| 2 | 26.3% | – |
 | 3 | 64.2% | – |
+| 4 | 80.6% | – |
 | 5 | 86.2% | – |
 | 6 | 90.6% | – |
+| 7 | 91.1% | – |
 | 29 | 100.0% | 100.0% |
 
 So the grokked network's *function* is captured by seven of the 29 available
 frequencies, and Z3 proves it; the partially trained network needs the whole
-basis. Note that the logit-level statement is much stronger than what holds:
+basis (at `|K|=7` it still mispredicts 309 of the 3,481 inputs). Note that the logit-level statement is much stronger than what holds:
 with `|K|=7` the logits still differ by up to 12 absolute, yet the argmax — the
 thing the program is required to reproduce — is identical on every input, and
 the prover establishes exactly that statement, not the stronger one. Agreement
