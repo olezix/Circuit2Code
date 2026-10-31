@@ -171,26 +171,38 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out", default=os.path.join(ROOT, "artifacts", "paper_tables.json"))
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument(
+        "--only",
+        nargs="+",
+        default=None,
+        help="restrict to these row keys (e.g. --only p113_grok p59_grok)",
+    )
     args = parser.parse_args(argv)
 
     payload: dict = {"generated_by": "scripts/paper_tables.py", "rows": {}, "extra": {}}
+    #: key -> (checkpoint, train fraction, data-split seed).  The p=113 run uses
+    #: its own training split (seed 3) so that "held-out" means the 30% the
+    #: optimiser never saw.
     specs = {
-        "p59_memoriser": ("add59.pt", 0.3),
-        "p59_grok": ("g70.pt", 0.7),
-        "p23_cosine": ("cos2.pt", 0.5),
-        "p13_cosine": ("cos13_60k.pt", 0.5),
+        "p59_memoriser": ("add59.pt", 0.3, args.seed),
+        "p59_grok": ("g70.pt", 0.7, args.seed),
+        "p23_cosine": ("cos2.pt", 0.5, args.seed),
+        "p13_cosine": ("cos13_60k.pt", 0.5, args.seed),
+        "p113_grok": ("g113.pt", 0.7, 3),
     }
-    for key, (name, fraction) in specs.items():
+    for key, (name, fraction, split_seed) in specs.items():
+        if args.only and key not in args.only:
+            continue
         path = os.path.join(CKPT, name)
         if not os.path.exists(path):
             print(f"skip {name} (missing)")
             continue
         print(f"analysing {name} ...", flush=True)
-        payload["rows"][key] = analyse_checkpoint(path, fraction, args.seed)
+        payload["rows"][key] = analyse_checkpoint(path, fraction, split_seed)
 
     # Robustness (attention slack) is exercised on a small domain: with slack the
     # enclosure-based pruning no longer applies and every input enters the solver.
-    for key, (name, fraction) in (("p13", ("cos13_60k.pt", 0.5)),):
+    for key, (name, fraction) in () if args.only else (("p13", ("cos13_60k.pt", 0.5)),):
         path = os.path.join(CKPT, name)
         if os.path.exists(path):
             for slack in (0.001, 0.01):
@@ -199,8 +211,9 @@ def main(argv=None) -> int:
                     path, fraction, slack
                 )
 
-    print("random p=11 ...", flush=True)
-    payload["extra"]["random_p11"] = random_network_row(11, args.seed)
+    if not args.only:
+        print("random p=11 ...", flush=True)
+        payload["extra"]["random_p11"] = random_network_row(11, args.seed)
 
     os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
     with open(args.out, "w", encoding="utf-8") as handle:

@@ -697,6 +697,184 @@
           }
         ]
       }
+    },
+    "p113_grok": {
+      "checkpoint": "artifacts/checkpoints/g113.pt",
+      "p": 113,
+      "d_model": 128,
+      "n_heads": 4,
+      "mlp_width": 0,
+      "n_params": 94592,
+      "train_fraction": 0.7,
+      "accuracy": {
+        "train_accuracy": 1.0,
+        "full_domain_accuracy": 0.9988252520561218,
+        "test_accuracy": 0.9960845708847046
+      },
+      "circuit": {
+        "heads": [
+          "L0H0",
+          "L0H1",
+          "L0H2",
+          "L0H3"
+        ],
+        "shift_residual": {
+          "L0H0": 67.85290045375251,
+          "L0H1": 60.813238346603065,
+          "L0H2": 37.14581646015291,
+          "L0H3": 41.98075670294002
+        },
+        "spectral_energy_top3": {
+          "L0H0": 0.9156061112880707,
+          "L0H1": 0.914128266274929,
+          "L0H2": 0.9868774246424437,
+          "L0H3": 0.9955122929532081
+        },
+        "frequencies": [
+          21,
+          25,
+          28
+        ],
+        "is_periodic": true,
+        "head_reports": [
+          {
+            "layer": 0,
+            "head": 0,
+            "accuracy_drop": 0.912522,
+            "logit_diff_drop": 11.737165,
+            "top_frequencies": [
+              [
+                28,
+                0.669306
+              ],
+              [
+                25,
+                0.168023
+              ],
+              [
+                21,
+                0.078277
+              ]
+            ],
+            "spectral_energy_top3": 0.915606
+          },
+          {
+            "layer": 0,
+            "head": 1,
+            "accuracy_drop": 0.911348,
+            "logit_diff_drop": 11.572641,
+            "top_frequencies": [
+              [
+                28,
+                0.670861
+              ],
+              [
+                25,
+                0.165414
+              ],
+              [
+                21,
+                0.077853
+              ]
+            ],
+            "spectral_energy_top3": 0.914128
+          },
+          {
+            "layer": 0,
+            "head": 2,
+            "accuracy_drop": 0.886679,
+            "logit_diff_drop": 6.634426,
+            "top_frequencies": [
+              [
+                21,
+                0.93502
+              ],
+              [
+                50,
+                0.045826
+              ],
+              [
+                8,
+                0.006031
+              ]
+            ],
+            "spectral_energy_top3": 0.986877
+          },
+          {
+            "layer": 0,
+            "head": 3,
+            "accuracy_drop": 0.928107,
+            "logit_diff_drop": 11.453381,
+            "top_frequencies": [
+              [
+                25,
+                0.965703
+              ],
+              [
+                38,
+                0.027209
+              ],
+              [
+                12,
+                0.002599
+              ]
+            ],
+            "spectral_energy_top3": 0.995512
+          }
+        ]
+      },
+      "synthesis": {
+        "motif": null,
+        "is_faithful_fallback": true,
+        "full_domain_accuracy": 1.0,
+        "n_nodes": 11055,
+        "truncation_error": {
+          "score": 9.889311591848582e-14,
+          "logit": 7.460698725481052e-13
+        },
+        "frequencies_per_head": {
+          "0": 56,
+          "1": 56,
+          "2": 56,
+          "3": 56
+        },
+        "full_basis": true,
+        "n_readout_parameters": 51076,
+        "seconds": 105.49,
+        "body": "argmax([0.0881368088708789 + softmax(...)[0] * G0_a(1.0, cos(0.05560340979804944 * a), sin(0.05560340979804944 * a), cos(0.11120681959609888 * a), sin(0.11120681959609888 * a), cos(0.1668102293941483 * a), sin(0.1668102293941483 * a), cos(0.22241363919219775 * a), sin(0.22241363919219775 * a), cos(0.27801704899024715 * a), sin(0.27801704899024715 * a), cos(0.3336204587882966 * a), sin(0.3336204587"
+      },
+      "verification": {
+        "verified": true,
+        "deployment_gap": 7.538885764901693e-05,
+        "total_time_s": 663.0,
+        "results": [
+          {
+            "name": "spec",
+            "status": "skipped",
+            "detail": "the program is not expressible in integer arithmetic: node ArgMax has no exact SMT translation",
+            "solver_time_s": 0.0,
+            "statistics": {}
+          },
+          {
+            "name": "model_equivalence",
+            "status": "proved",
+            "detail": "all 12769 inputs certified (enclosure-decided: 12769, SMT-decided: 0); Z3 discharged 0 queries in 0.000s",
+            "solver_time_s": 0.0,
+            "statistics": {
+              "inputs": 12769.0,
+              "inputs_enclosure_certified": 12769.0,
+              "inputs_smt": 0.0
+            }
+          },
+          {
+            "name": "logit_equivalence",
+            "status": "proved",
+            "detail": "exact rational comparison of 1442897 certified logit bounds; no SMT query required",
+            "solver_time_s": 0.0,
+            "statistics": {}
+          }
+        ]
+      }
     }
   },
   "extra": {
