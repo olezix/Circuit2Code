@@ -506,8 +506,10 @@ answers to different questions.
 * **Discrete motif search is exhaustive over a small DSL**, not open-ended
   program synthesis. Programs outside the DSL fall back to the faithful circuit.
 * Only tasks whose input domain is finite and enumerable can be certified
-  exhaustively; modular arithmetic at p=59 (3,481 inputs) is comfortably inside
-  that envelope, larger domains are not.
+  exhaustively; modular arithmetic at p=59 (3,481 inputs) and p=113 (12,769
+  inputs) are inside that envelope, at 1.5 s and 658 s of proof time
+  respectively. Domains grow as `p²`, so p=113 is roughly the practical ceiling
+  on one CPU core.
 
 ## 11. Repository layout
 
@@ -520,7 +522,7 @@ circuit2code/
 ├── src/verification       z3_translator.py, verifier.py
 ├── src/codegen            emit_python.py, emit_c.py, common.py
 ├── tests/                 test_transformer, test_circuit_finder, test_synthesis,
-│                          test_verifier, test_codegen
+│                          test_verifier, test_codegen, test_cli, test_scripts
 ├── scripts/               paper_tables.py, frequency_budget.py, truncation_sweep.py
 └── demo/cli.py            train | extract-circuit | decompile | verify | export | demo
 ```
