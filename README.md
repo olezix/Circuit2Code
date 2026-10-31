@@ -43,11 +43,15 @@ domain.
 ### 2.1 The task and the grokking regime
 
 The primary domain is modular addition: for a prime `p`, learn
-`f(a, b) = (a + b) mod p` from a fraction of the `p²` possible inputs. A
-one-layer, attention-only Transformer trained with full-batch AdamW on 30% of
-the data exhibits **grokking** (Power et al., 2022): training accuracy reaches
-100% early while held-out accuracy stays at chance, and only after thousands of
-further optimisation steps does the network generalise.
+`f(a, b) = (a + b) mod p` from a fraction of the `p²` possible inputs. In this
+regime a one-layer, attention-only Transformer trained with full-batch AdamW
+exhibits **grokking** (Power et al., 2022): training accuracy reaches 100% early
+while held-out accuracy stays at chance, and only after many further optimisation
+steps does the network generalise. Which data fraction grokks is not obvious and
+is worth reporting honestly: in our sweep it is 70% (grokked at epoch 16,750),
+while every 30%-data run we trained stalled at 87% held-out accuracy — the
+textbook "grokks *because* data is scarce" story did not reproduce here, and
+§9.8 says so instead of hiding it.
 
 ### 2.2 The trigonometric circuit
 
@@ -170,14 +174,17 @@ pip install -r requirements.txt     # or: pip install -e ".[dev]"
 ```
 
 Python ≥ 3.10, PyTorch ≥ 2.2, `z3-solver` ≥ 4.12, `sympy`, `numpy`, `scipy`,
-`rich`, `pytest`. A CUDA device is not required (CPU-only runs are the default
-and are bit-reproducible for a fixed number of threads).
+`rich`, `pytest`. A CUDA device is not required: every result in this repository
+was produced CPU-only with one BLAS thread, which is also what makes a run
+deterministic (`make train` passes `--torch-threads 1`).
 
 ## 5. Quickstart
 
 ```bash
-# train the reference checkpoint (~48 min on one CPU core at p=59; this is the
-# configuration that groks: 70% of the domain, cosine-annealed lr 1e-2, seed 3)
+# train the reference checkpoint (this is the configuration that groks: 70% of
+# the domain, cosine-annealed lr 1e-2, seed 3; it stops itself 2,000 epochs after
+# held-out accuracy first reaches 1.0, which took 16,750 epochs / 48 min on the
+# machine used for the paper and 1,250 epochs / 5 min on a newer PyTorch)
 python demo/cli.py train --p 59 --epochs 30000 --train-fraction 0.7 --seed 3 \
     --checkpoint-every 1000 --out artifacts/checkpoints/g70.pt
 
@@ -209,7 +216,7 @@ export) on a tiny model in about five seconds:
 python demo/cli.py demo          # writes artifacts/demo/
 ```
 
-A 5-minute end-to-end smoke test (tiny model, full-domain training):
+A one-minute end-to-end smoke test (tiny model, full-domain training):
 
 ```bash
 python demo/cli.py train --p 5 --d-model 16 --n-heads 2 --init-std 0.5 \
@@ -229,8 +236,11 @@ from src.synthesis import synthesize
 from src.verification import Verifier, VerifyConfig
 from src.codegen import emit_python, emit_c
 
-result = train_modular_addition(TrainConfig(p=59, epochs=40000))
-dataset = modular_addition_dataset(59, train_fraction=0.3, seed=42)
+# the recipe that grokks (section 5): 70% of the domain, seed 3
+result = train_modular_addition(
+    TrainConfig(p=59, epochs=30000, train_fraction=0.7, seed=3)
+)
+dataset = modular_addition_dataset(59, train_fraction=0.7, seed=3)
 circuit = extract_circuit(result.model, dataset)
 synth = synthesize(result.model, dataset, circuit=circuit)
 report = Verifier(result.model, synth.program, VerifyConfig()).verify_all()
@@ -248,7 +258,8 @@ open("add.c", "w").write(emit_c(synth.program))
   independent.
 * Full-batch training only: no shuffling, no dropout, no data augmentation.
 * `TrainConfig(torch_threads=k)` pins the BLAS thread count, which fixes the
-  reduction order and therefore makes a run bitwise reproducible.
+  reduction order: with the same library versions a run is bitwise reproducible
+  (thread count and BLAS/library versions are part of the recipe).
 * `tests/test_transformer.py::test_training_is_reproducible` trains twice and
   asserts identical weights.
 
@@ -283,14 +294,29 @@ python scripts/truncation_sweep.py artifacts/checkpoints/g113.pt --train-fractio
         --budget 8 --no-verify
 ```
 
+The committed evidence is:
+
+| Artifact | Contents |
+|---|---|
+| `artifacts/paper_tables.json` | every per-checkpoint row: accuracy, per-head circuit statistics, synthesis provenance, and the Z3 verdict for each proof obligation |
+| `artifacts/frequency_budget.json` | the spectral summary of six checkpoints, including the p=113 network |
+| `artifacts/truncation_sweep_p59.json` | full-domain agreement of the reported p=59 checkpoint for `|K| = 1 … 8` and the full basis, with the Z3 verdict of each exactly-agreeing truncation |
+| `artifacts/truncation_sweep_p59_replication.json` | the same sweep for the independent rerun of §9.1 (`|K| = 1 … 12`) |
+| `artifacts/truncation_sweep_p113.json` | the same sweep for the p=113 network |
+| `artifacts/history/g70_replication.history.json` | training trajectory of the replication run |
+
+None of these files is edited by hand; they are rewritten by the commands above.
+
 ### 9.1 A grokked network, decompiled and proved
 
 `g70.pt` is a one-layer, four-head, `d_model = 128` attention-only model
 (80,768 parameters) trained on 70% of the `59² = 3481` pairs with full-batch
 AdamW at `lr = 1e-2`, half-cosine annealed to 2%, weight decay 1.0, for 18,750
 epochs. It fits the training set **and the held-out set exactly** (100% / 100%,
-grokking detected at epoch 16,750; training curve in
-`artifacts/checkpoints/g70.history.json`).
+grokking detected at epoch 16,750). The checkpoint is not committed (it is
+regenerated by `make train`); every number in the table below is the `p59_grok`
+row of `artifacts/paper_tables.json`, and `train` writes the trajectory next to
+the checkpoint as `<checkpoint>.history.json`.
 
 | Quantity | Value |
 |---|---|
@@ -305,12 +331,39 @@ grokking detected at epoch 16,750; training curve in
 | float32 ↔ float64 deployment gap | 1.18e-4 (reported, not assumed away) |
 | Synthesis / verification wall time | 0.37 s / 1.49 s |
 
-The emitted C is five lines, allocation-free, and compiles under
-`-std=c99 -O3 -Wall -Wextra -pedantic -Werror`. The *faithful trigonometric
+The emitted C is ten lines (a Euclidean-remainder helper plus a one-line
+function), allocation-free, and compiles under
+`-std=c99 -O3 -Wall -Wextra -pedantic -Werror`.
+
+The *faithful trigonometric
 circuit* built from the same weights is also exactly equivalent, and — this is
 the paper's central quantitative claim — a **7-frequency** truncation of it
 still reproduces the network's argmax on all 3481 inputs and is **proved
 equivalent by Z3** (Table in §9.6).
+
+**Independent replication.** Rerunning the same command in this repository's
+current environment (PyTorch 2.15 instead of 2.8) grokks *earlier* — 100%
+held-out at epoch 1,250, stopped at 3,250 after the 2,000-epoch post-grok
+window (checkpoint `artifacts/checkpoints/g70_replication.pt`, trajectory
+`artifacts/history/g70_replication.history.json`; neither weights file is
+committed). The
+result is the same object, not a fluke of one seed:
+
+| Quantity | Original run | Replication |
+|---|---|---|
+| Grokking / stop epoch | 16,750 / 18,750 | 1,250 / 3,250 |
+| Train / held-out / full-domain | 1.000 / 1.000 / 1.000 | 1.000 / 1.000 / 1.000 |
+| Dominant frequencies | `{22, 15, 7}`, `{22, 28, 15}` | `{22, 15, 28}` in three heads |
+| Top-3 spectral energy | 0.972 – 0.998 | 0.979 – 0.995 |
+| Identified algorithm | `(a + b) % 59` (4 nodes) | `(a + b) % 59` (4 nodes) |
+| Z3 `spec` / `model_equivalence` | proved / proved (3481) | proved / proved (3481) |
+| Frequencies for an exact argmax | 7 of 29 (proved) | 10 of 29 (proved) |
+| Deployment gap | 1.18e-4 | 6.2e-5 |
+
+The optimisation path is chaotic (a different PyTorch release moves the
+grokking epoch by an order of magnitude) but the *circuit* it lands in is not:
+same frequency family, same program, same proof. That is why the paper reports
+one trajectory and certifies properties, not training curves.
 
 ### 9.2 Other checkpoints: how the statistic tracks the algorithm
 
@@ -335,7 +388,8 @@ float32 ↔ float64 deployment gap is `1.2e-4` (p=59), `1.4e-4` (p=13),
 The same pipeline on a harder instance: a one-layer, four-head, `d_model = 128`
 model (94,592 parameters) trained on 70% of the 12,769 `(a, b)` pairs for 18,000
 epochs of a 30,000-epoch half-cosine schedule (the run was stopped at epoch
-18,000; `g113.history.json` holds the trajectory). This network does *not*
+18,000, before the schedule had annealed; its measurements are the `p113_grok`
+row of `artifacts/paper_tables.json`). This network does *not*
 generalise exactly — 15 of the 12,769 pairs are still wrong — which makes it
 a useful intermediate case between the grokked `g70.pt` and the 87% run
 `add59_cos.pt`. Accuracies are measured on the split the model was trained on
@@ -371,7 +425,7 @@ seed or a small modulus: the same enclosure engine proves every one of the
 circuit is linear in the certified enclosures. Second, the seven-frequency
 picture does not transfer for free: on `p = 113` a `|K|`-frequency truncation
 needs the whole 56-frequency basis to be exact (`|K| = 1, 2, 3, 4, 5, 6, 7, 8`
-give 14.6%, 29.6%, 49.9%, 64.5%, 73.6%, 77.9%, 92.5%, 96.1%), whereas on
+give 14.6%, 29.6%, 49.9%, 64.5%, 73.5%, 77.9%, 92.5%, 96.1%), whereas on
 `p = 59` a grokked network is already exactly reproduced at `|K| = 7`. The
 circuit statistic tracks *what the network actually learned*: an almost learned
 algorithm needs almost all of its frequencies.
@@ -404,7 +458,7 @@ $ circuit2code verify --checkpoint /tmp/add5.pt --train-fraction 1.0
   verified = True
 ```
 
-The emitted C is five lines, allocation-free, and compiles under `-Werror`.
+The emitted C is ten lines, allocation-free, and compiles under `-Werror`.
 (`circuit2code demo` runs exactly this pipeline on a fresh model.)
 
 ### 9.6 Circuit size versus fidelity
@@ -440,7 +494,16 @@ with the network's over all 3,481 inputs:
 
 So the grokked network's *function* is captured by seven of the 29 available
 frequencies, and Z3 proves it; the partially trained network needs the whole
-basis (at `|K|=7` it still mispredicts 309 of the 3,481 inputs). Note that the logit-level statement is much stronger than what holds:
+basis (at `|K|=7` it still mispredicts 309 of the 3,481 inputs). The count is
+not a universal constant: the replication run of §9.1 needs `|K|=10` for an
+exact argmax (proved there too, 48 s), and the curve is not even monotone:
+`|K| = 7` leaves 4 of the 3,481 inputs wrong, `|K| = 8` leaves 1, `|K| = 9`
+leaves 2, `|K| = 10` is exact and `|K| = 11` is wrong on 2 again (all rows in
+`artifacts/truncation_sweep_p59_replication.json`).
+What replicates is the *shape* of the result ---
+one small band of frequencies carries the function, the logit-level statement
+stays false at that truncation, and the argmax-level statement is provable ---
+not the integer 7. Note that the logit-level statement is much stronger than what holds:
 with `|K|=7` the logits still differ by up to 12 absolute, yet the argmax — the
 thing the program is required to reproduce — is identical on every input, and
 the prover establishes exactly that statement, not the stronger one. Agreement
@@ -481,7 +544,7 @@ answers to different questions.
   stopped at epoch 18,000 of 30,000, so it is an *almost* grokked model
   (99.6% held-out). We report it as such; the certification of its faithful
   circuit is nevertheless exact over the full domain, and we do not claim a
-  grokked `p = 113` network or a seven-frequency certificate there.
+  grokked `p = 113` network or a small-`|K|` certificate there.
 
 ## 10. Limitations
 
@@ -515,7 +578,8 @@ answers to different questions.
 
 ```
 circuit2code/
-├── README.md              paper/main.tex        Makefile     pyproject.toml
+├── README.md  LICENSE  Makefile  pyproject.toml  requirements.txt  .gitignore
+├── paper/main.tex         NeurIPS-style write-up (self-contained, 8 pages)
 ├── src/models             transformer.py, train.py
 ├── src/interpretability   probing.py, circuit_finder.py
 ├── src/synthesis          ast_nodes.py, symbolic_reg.py, program_synthesizer.py
@@ -524,6 +588,9 @@ circuit2code/
 ├── tests/                 test_transformer, test_circuit_finder, test_synthesis,
 │                          test_verifier, test_codegen, test_cli, test_scripts
 ├── scripts/               paper_tables.py, frequency_budget.py, truncation_sweep.py
+├── artifacts/             paper_tables.json, frequency_budget.json,
+│                          truncation_sweep_p59.json, truncation_sweep_p113.json
+├── .github/workflows      test.yml (pytest on 3.10 and 3.12, plus the CLI demo)
 └── demo/cli.py            train | extract-circuit | decompile | verify | export | demo
 ```
 

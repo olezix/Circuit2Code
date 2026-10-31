@@ -44,9 +44,11 @@
 
 \title{\textbf{Circuit2Code}: Verified Neuro-Symbolic Decompilation of\\
 Algorithmic Transformers into Python and C}
+% NOTE: anonymise for double-blind submission (replace with `Anonymous Authors`
+% and drop the URL); the repository carries the full, non-anonymous history.
 \author{%
-  Anonymous Authors\\
-  \texttt{circuit2code@example.org}
+  olezix\\
+  \texttt{https://github.com/olezix/Circuit2Code}
 }
 \date{}
 
@@ -76,13 +78,12 @@ Presburger arithmetic, a full-domain argmax-equivalence proof, and a bounded
 logit-equivalence proof used for faithful trigonometric decompilations. On
 $a+b \bmod 59$ a grokked network (100\% train, 100\% held-out) is decompiled to
 the two-line modular-addition program and certified over all $3{,}481$ inputs,
-and the same network is certified as a seven-frequency trigonometric circuit;
-a memorising network and a partially trained one are certified just as
-rigorously, with circuit size $29$ and $29$ versus $7$, which turns the usual
-qualitative ``circuits versus lookup table'' distinction into a measured
-number. The same pipeline certifies a $99.9\%$-correct $p=113$ network over all
-$12{,}769$ inputs. All artefacts---code,
-tests, and this paper---are reproducible from a single seed.
+while the same weights are certified as a trigonometric circuit of seven
+frequencies (ten in an independent rerun); a partially trained and a memorising
+network are certified just as rigorously but need the full basis, which turns
+the qualitative ``circuits versus lookup table'' distinction into a measured
+number. A $99.9\%$-correct $p=113$ network is certified over all $12{,}769$
+inputs. Code, tests and this paper are reproducible from a single seed.
 \end{abstract}
 
 % -----------------------------------------------------------------------------
@@ -112,7 +113,7 @@ Transformers trained on modular arithmetic. Our contributions are:
   \item \textbf{A decompilation pipeline} (Section~\ref{sec:method}) that maps
         weights to a typed intermediate representation (IR), and IR to Python and
         ANSI C. The C output is C99, allocation-free, and compiles with
-        \code{-Wall -Wextra -pedantic}. For a grokked $p=59$ network it is five
+        \code{-Wall -Wextra -pedantic}. For a grokked $p=59$ network it is ten
         lines.
   \item \textbf{A sound float$\to$real bridge} (Section~\ref{sec:verification}).
         We compute certified enclosures of every activation with explicit
@@ -153,9 +154,11 @@ our Fourier projection is the modular-arithmetic instance of the same idea.
 Extracting programs from RNNs and Transformers has a long history, from
 automata extraction \citep{weiss2018extracting} to differentiable program
 induction. Most such methods return a program with empirical, not formal,
-agreement. \citet{yao2024causal} use causal abstraction to relate a network to a
-symbolic algorithm; our contribution is to close the loop with an SMT proof and
-verified code generation.
+agreement. Causal abstraction \citep{geiger2023causal} provides the theory for when a
+network implements a symbolic algorithm, and distributed alignment search
+\citep{geiger2024das} turns the search for the correspondence into optimisation;
+our contribution is to close the loop with an SMT proof and verified code
+generation.
 
 \paragraph{Formal verification of neural networks.}
 Complete verifiers such as Marabou \citep{katz2019marabou} and $\alpha,\beta$-CROWN
@@ -381,7 +384,8 @@ theorem. A witness that only touches the edge of an enclosure is reported as
 Reference configuration: $p=59$, $d=128$, $H=4$ heads, one layer, 80{,}768
 parameters, full-batch AdamW with $\beta=(0.9,0.98)$, weight decay $1.0$ and a
 learning rate half-cosine annealed from $10^{-2}$ to $2\%$ of its value. Runs are
-single-threaded on CPU and bitwise reproducible from the seed. We report three
+single-threaded on CPU and deterministic: the same seed \emph{and} the same library
+versions reproduce the parameters bit for bit. We report three
 checkpoints of this recipe:
 
 \begin{itemize}[leftmargin=1.4em,itemsep=1pt]
@@ -521,14 +525,18 @@ the emitted program is
 (4 IR nodes) and Z3 discharges both the specification --- the quantified
 Presburger statement $\forall a,b\in\Zp: (P=a+b \wedge P<p) \vee (P=a+b-p
 \wedge P\ge 0)$ --- and the full-domain equivalence with the network
-(Table~\ref{tab:verification}). The emitted C is five lines, allocation-free and
+(Table~\ref{tab:verification}). The emitted C is ten lines, allocation-free and
 compiles under \code{-Werror}.
 
 \paragraph{The same network as a trigonometric circuit.} Building the faithful
 circuit from checkpoint G's weights reproduces its argmax on all 3{,}481 inputs
 at the full basis, and, as Table~\ref{tab:size} shows, already at $|K|=7$. Z3
 proves that seven-frequency program equivalent to the network over the whole
-domain. The logit-level statement is \emph{not} true at that truncation (the
+domain. On the replication run of the previous paragraph the same statement is
+proved at $|K|=10$ rather than 7, and the agreement curve is not monotone there
+($|K|=8,9,11$ each leave one or two of the 3{,}481 inputs wrong while
+$|K|=10$ is exact): a frequency truncation is a re-projection, not a nested
+approximation of the argmax. The *kind* of statement proved is identical. The logit-level statement is \emph{not} true at that truncation (the
 logits differ by up to $12$ in absolute value), which is exactly why the prover
 is asked for the argmax statement: the same network is simultaneously the
 discrete algorithm and an approximate trigonometric circuit, and both readings
@@ -554,7 +562,7 @@ the logit statement over the $1.44$M certified bounds (Table~\ref{tab:verificati
 Its C output is 7.70\,MB, compiles in 11.1\,s with no diagnostics, and agrees
 with the Python emission on all 12{,}769 inputs. A $|K|$-frequency truncation,
 however, needs the whole 56-frequency basis to be exact (agreement
-$0.146, 0.296, 0.499, 0.645, 0.736, 0.779, 0.925, 0.961$ for $|K|=1,\dots,8$),
+$0.146, 0.296, 0.499, 0.645, 0.735, 0.779, 0.925, 0.961$ for $|K|=1,\dots,8$),
 consistent with the picture above: an almost-learned algorithm needs almost all
 of its spectrum.
 
@@ -563,6 +571,16 @@ of its spectrum.
 \code{-std=c99 -O3 -Wall -Wextra -pedantic} and \emph{no diagnostics}, and its
 output is bit-identical to the emitted Python on every input (maximum absolute
 difference $0.0$).
+
+\paragraph{Replication.} Rerunning checkpoint G's command in a different
+software environment (PyTorch 2.15 rather than 2.8) moves the grokking epoch by
+an order of magnitude --- held-out accuracy reaches $1$ at epoch 1{,}250 instead
+of 16{,}750 --- yet the recovered object is unchanged: the same frequencies
+$\{15,22,28\}$, the same four-node program $(a+b) \bmod 59$, and the same two
+proof obligations discharged over all 3{,}481 inputs (gap $6.2\times10^{-5}$).
+The optimisation path into the circuit is chaotic; the circuit and its proof are
+not. The trajectory of the replication is committed as
+\code{artifacts/history/g70\_replication.history.json}.
 
 \begin{table}[t]
 \centering
@@ -655,16 +673,20 @@ added to every certified attention enclosure.}
 \label{sec:notclaimed}
 
 Checkpoint G was trained on $70\%$ of the domain, so its held-out set is the
-remaining $30\%$ ($1{,}044$ inputs): exact on both, but the \emph{delayed}
-generalisation that gives grokking its name is visible only in the
-$30\%$-data runs, and those stop at $87\%$. We swept training fractions from
+remaining $30\%$ ($1{,}044$ inputs) and it is exact on both. The \emph{delayed}
+generalisation that gives grokking its name is a property of the run, not of a
+fixed data fraction: it took 16{,}750 epochs in the reported run, 1{,}250 in the
+replication of the previous subsection, and the $30\%$-data runs we swept show a
+long plateau followed by a stall at $87\%$ instead of an exact solution. The
+textbook ``scarcer data grokks harder'' ordering did not reproduce here, and we
+state the fraction that did rather than implying we reproduced the usual one. We swept training fractions from
 $0.2$ to $1.0$, learning rates from $3\times10^{-4}$ to $10^{-2}$, and schedules
 of 10{,}000--60{,}000 epochs; the $30\%$-data runs consistently stopped short,
 and we report that rather than selecting the fraction that works. Nothing in the
 method depends on which of the two succeeds: the decompiler is exact and proved
-in both cases, and Table~\ref{tab:size} quantifies the difference --- seven
-frequencies suffice for the fully learned circuit, the whole basis is needed for
-the partial one.
+in both cases, and Table~\ref{tab:size} quantifies the difference --- seven to
+ten frequencies suffice for a fully learned circuit (seven in the reported run,
+ten in the rerun), the whole basis is needed for the partial one.
 
 % -----------------------------------------------------------------------------
 \section{Discussion and limitations}
@@ -717,7 +739,7 @@ trigonometric circuit otherwise. The key technical ingredient is a sound and
 tight bridge between IEEE-754 arithmetic and the exact rationals that the solver
 understands. The measured spectral statistic --- $97$--$99.8\%$ of the energy of
 a grokked network in three frequencies, versus $27$--$43\%$ for a memoriser ---
-together with the seven-versus-$29$ frequency gap in Table~\ref{tab:size}, is a
+together with the seven-to-ten-versus-$29$ frequency gap in Table~\ref{tab:size}, is a
 circuit-health signal that future work can use to decide when an extracted
 program is the \emph{algorithm} rather than a description of one network. The
 pipeline itself carries over to a second modulus without changes: a
@@ -728,12 +750,20 @@ can be re-derived end to end from a single seed.
 
 % -----------------------------------------------------------------------------
 \section*{Reproducibility statement}
-All experiments are produced by \code{make all} in the accompanying repository.
-Seeds are fixed (\code{torch.manual_seed(42)}, \code{np.random.seed(42)}), the
-data split is generated by its own seeded generator, and training is full-batch
-with a pinned BLAS thread count, which makes runs bitwise reproducible
-(a unit test asserts this). Every command writes a JSON artefact; the numbers in
-Tables~\ref{tab:training}--\ref{tab:verification} are copied from those files.
+All experiments are produced by the commands in the accompanying repository.
+Every model and every data split is built from an explicit seed (42 for the unit
+tests, 3 for the reported runs), training is full-batch with a pinned BLAS thread
+count, and a rerun in the same software environment is bitwise identical (a unit
+test asserts this). Across PyTorch releases the \emph{trajectory} can differ
+substantially --- the replication of Section~\ref{sec:results} grokks ten times
+earlier --- which is why every claim we make about a network is a certified
+property of its weights, not a statement about an epoch number. Each command
+writes a JSON artefact: the checkpoint rows of
+Tables~\ref{tab:training}--\ref{tab:verification} come from
+\code{artifacts/paper\_tables.json} and the truncation sweep from
+\code{artifacts/truncation\_sweep\_p59.json}; the training trajectory of
+Table~\ref{tab:training} is the \code{<checkpoint>.history.json} that
+\code{train} writes next to each checkpoint.
 The $p=113$ checkpoint of Section~\ref{sec:results} comes from
 
 \begin{quote}\small
@@ -751,8 +781,8 @@ The $p=113$ checkpoint of Section~\ref{sec:results} comes from
 \bibitem{chughtai2023group}
 B.~Chughtai, L.~Chan, and N.~Nanda.
 \newblock A toy model of universality: Reverse engineering how networks learn
-  group multiplication.
-\newblock \emph{arXiv:2306.03030}, 2023.
+  group operations.
+\newblock \emph{arXiv:2302.03025}, 2023.
 
 \bibitem{elhage2021framework}
 N.~Elhage, N.~Nanda, C.~Olsson, et al.
@@ -766,7 +796,7 @@ G.~Katz, D.~A. Huang, D.~Ibeling, et al.
 \newblock In \emph{Computer Aided Verification (CAV)}, 2019.
 
 \bibitem{kramar2024atp}
-J.~Kram\'ar, N.~Nanda, and B.~Niklaus.
+J.~Kram\'ar, T.~Lieberum, R.~Shah, and N.~Nanda.
 \newblock AtP*: An efficient and scalable method for localizing LLM behaviour to
   components.
 \newblock \emph{arXiv:2403.00745}, 2024.
@@ -805,10 +835,19 @@ G.~Weiss, Y.~Goldberg, and E.~Yahav.
   counterexamples.
 \newblock In \emph{International Conference on Machine Learning (ICML)}, 2018.
 
-\bibitem{yao2024causal}
-Y.~Yao, L.~Zhang, et al.
-\newblock Causal abstraction for faithful model explanation.
-\newblock \emph{arXiv:2406.00777}, 2024.
+\bibitem{geiger2023causal}
+A.~Geiger, D.~Ibeling, A.~Zur, M.~Chaudhary, S.~Chauhan, J.~Huang, A.~Arora,
+  Z.~Wu, N.~Goodman, C.~Potts, and T.~Icard.
+\newblock Causal abstraction: A theoretical foundation for mechanistic
+  interpretability.
+\newblock \emph{arXiv:2301.04709}, 2023 (v4, 2025).
+
+\bibitem{geiger2024das}
+A.~Geiger, Z.~Wu, C.~Potts, T.~Icard, and N.~Goodman.
+\newblock Finding alignments between interpretable causal variables and
+  distributed neural representations.
+\newblock In \emph{Proceedings of the 3rd Conference on Causal Learning and
+  Reasoning (CLeaR)}, 2024.
 
 \bibitem{zhang2018crown}
 H.~Zhang, T.-W. Weng, P.-Y. Chen, C.-J. Hsieh, and L.~Daniel.

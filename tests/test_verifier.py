@@ -305,9 +305,13 @@ def test_reference_grokked_checkpoint_decompiles_to_the_algorithm():
     from src.verification import Verifier
 
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    path = os.path.join(root, "artifacts", "checkpoints", "g70.pt")
-    if not os.path.exists(path):
-        pytest.skip("reference grokked checkpoint missing")
+    # Either the published checkpoint or the documented replication of it; both
+    # are grokked and both must satisfy the paper's claims.
+    candidates = ["g70.pt", "g70_replication.pt"]
+    paths = [os.path.join(root, "artifacts", "checkpoints", name) for name in candidates]
+    path = next((p for p in paths if os.path.exists(p)), None)
+    if path is None:
+        pytest.skip("reference grokked checkpoint missing (run `make train`)")
 
     model = Transformer.load(path)
     dataset = modular_addition_dataset(59, train_fraction=0.7, seed=3)
