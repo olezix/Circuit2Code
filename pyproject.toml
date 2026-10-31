@@ -1,0 +1,59 @@
+[build-system]
+requires = ["hatchling>=1.24"]
+build-backend = "hatchling.build"
+
+[project]
+name = "circuit2code"
+version = "0.1.0"
+description = "Neuro-symbolic decompilation of algorithmic Transformers into verified Python and ANSI C."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "olezix", email = "olezix@users.noreply.github.com" }]
+keywords = [
+    "mechanistic-interpretability",
+    "program-synthesis",
+    "formal-verification",
+    "smt",
+    "z3",
+    "grokking",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Intended Audience :: Science/Research",
+]
+dependencies = [
+    "torch>=2.2.0",
+    "z3-solver>=4.12.0",
+    "numpy>=1.26.0",
+    "scipy>=1.11.0",
+    "sympy>=1.12",
+    "mpmath>=1.3.0",
+    "rich>=13.7.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/olezix/Circuit2Code"
+Issues = "https://github.com/olezix/Circuit2Code/issues"
+
+[project.optional-dependencies]
+dev = ["pytest>=7.4", "pytest-cov>=4.1"]
+
+[project.scripts]
+circuit2code = "demo.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src", "demo"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+markers = [
+    "slow: trains a model or drives the CLI end to end (skipped by `make test-fast`)",
+]
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
