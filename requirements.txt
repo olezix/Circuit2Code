@@ -1,0 +1,15 @@
+# Circuit2Code -- runtime dependencies (CPU-only wheels are sufficient).
+# Install with:  pip install -r requirements.txt
+#
+# Lower bounds are the versions the suite is developed against; upper bounds pin
+# the major series so that a fresh install cannot silently jump to an
+# incompatible API (in particular numpy 2.x, whose scalar/array promotion rules
+# the emitters rely on).
+torch>=2.2,<3
+z3-solver>=4.12
+numpy>=1.26,<3
+scipy>=1.11,<2
+sympy>=1.12,<2
+mpmath>=1.3,<2
+rich>=13.7,<16
+pytest>=8.0,<10

@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Training artefacts (regenerate with `make train`).
+# The measurement JSONs (artifacts/*.json) ARE committed: they are the evidence
+# behind the numbers in README section 9 and in the paper.
+artifacts/checkpoints/
+artifacts/decompiled/
+artifacts/exported/
+artifacts/demo/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# LaTeX
+paper/main.aux
+paper/main.log
+paper/main.out
+paper/main.pdf
+paper/main.bbl
+paper/main.blg
+paper/*.fls
+paper/*.fdb_latexmk

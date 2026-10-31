@@ -1,0 +1,776 @@
+% -----------------------------------------------------------------------------
+% Circuit2Code -- NeurIPS-style paper draft.
+%
+% The document is self-contained and compiles with a stock TeX Live install.
+% To submit, replace the preamble block marked "NEURIPS SWITCH" with
+%   \usepackage[final]{neurips_2024}
+% and set \documentclass{article} (the official style file is not vendored here
+% so that the repository builds without a network install).
+% -----------------------------------------------------------------------------
+\documentclass[11pt]{article}
+
+\usepackage[letterpaper,margin=1in]{geometry}
+\usepackage{times}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{enumitem}
+\usepackage{caption}
+\captionsetup{font=small,labelfont=bf}
+
+\hypersetup{colorlinks=true,linkcolor=blue!50!black,citecolor=blue!50!black,
+            urlcolor=blue!50!black}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{definition}{Definition}
+\newtheorem{proposition}{Proposition}
+
+\newcommand{\Zp}{\mathbb{Z}_p}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\WQK}{W_{QK}}
+\newcommand{\WOV}{W_{OV}}
+\newcommand{\argmax}{\operatorname*{arg\,max}}
+\newcommand{\code}[1]{\texttt{#1}}
+
+\title{\textbf{Circuit2Code}: Verified Neuro-Symbolic Decompilation of\\
+Algorithmic Transformers into Python and C}
+\author{%
+  Anonymous Authors\\
+  \texttt{circuit2code@example.org}
+}
+\date{}
+
+\begin{document}
+\maketitle
+
+% -----------------------------------------------------------------------------
+\begin{abstract}
+We present \textsc{Circuit2Code}, a system that decompiles a small Transformer
+into an equivalent, human-readable program with a machine-checked correctness
+proof: when the network implements a discrete algorithm the program is that
+algorithm, and when it does not the program is the network's own trigonometric
+circuit, which is exact and certified over the whole input domain. The pipeline (i) trains a
+transparent attention-only Transformer on modular addition in the grokking
+regime, (ii) recovers the algorithmic circuit by head ablation, direct logit
+attribution and a discrete Fourier projection of the effective weight matrices
+$\WQK = W_Q W_K^\top$ and $\WOV = W_V W_O^\top$, (iii) synthesizes a symbolic
+program in a typed intermediate representation, (iv) proves equivalence between
+the network and the program with the Z3 SMT solver over the entire finite input
+domain, and (v) emits dependency-free Python and ISO C99 that compile and run
+bit-exactly. Soundness is obtained by translating the network into exact rational
+linear arithmetic in which the only non-algebraic quantities---the attention
+probabilities---are replaced by certified outward-rounded enclosures of the
+IEEE-754 forward pass, derived from Higham-style rounding-error budgets. We
+distinguish three machine-checked theorems: a specification proof in quantified
+Presburger arithmetic, a full-domain argmax-equivalence proof, and a bounded
+logit-equivalence proof used for faithful trigonometric decompilations. On
+$a+b \bmod 59$ we certify the decompilation of a partially generalising network
+(held-out accuracy $87\%$, spectral energy concentrated in three frequencies of
+$29$) over all $3{,}481$ inputs, and we report, rather than hide, that exact
+generalisation was not reached in this architecture. All artefacts---code,
+tests, and this paper---are reproducible from a single seed.
+\end{abstract}
+
+% -----------------------------------------------------------------------------
+\section{Introduction}
+\label{sec:intro}
+
+A trained neural network is a program whose source code is a table of floating
+point numbers. For models that solve discrete algorithmic tasks, this table
+often implements a crisp algorithm: recent mechanistic interpretability work has
+recovered Fourier multiplication circuits for modular arithmetic
+\citep{nanda2023grokking}, induction heads \citep{olsson2022incontext}, and
+group-operation circuits \citep{chughtai2023group}. These results are
+\emph{descriptive}: they explain the network in the language of linear algebra
+and features.
+
+This paper asks a constructive question: \emph{can we turn such an explanation
+into a program whose equivalence to the network is proved, not eyeballed?}
+Doing so requires three things that existing interpretability tooling does not
+provide: a symbolic representation with a formal semantics, a sound bridge
+between floating point and real arithmetic, and a certified translation from the
+symbolic representation to executable code.
+
+\textsc{Circuit2Code} supplies all three, for the class of small algorithmic
+Transformers trained on modular arithmetic. Our contributions are:
+
+\begin{enumerate}[leftmargin=1.4em,itemsep=2pt]
+  \item \textbf{A decompilation pipeline} (Section~\ref{sec:method}) that maps
+        weights to a typed intermediate representation (IR), and IR to Python and
+        ANSI C. The C output is C99, allocation-free, and compiles with
+        \code{-Wall -Wextra -pedantic}.
+  \item \textbf{A sound float$\to$real bridge} (Section~\ref{sec:verification}).
+        We compute certified enclosures of every activation with explicit
+        rounding-error budgets, then convert the enclosure endpoints to exact
+        rationals before they reach the solver. Attention probabilities are the
+        only non-algebraic quantities; they enter the SMT query as reals
+        constrained to an interval and to the probability simplex.
+  \item \textbf{Three machine-checked theorems}: a quantified specification
+        proof for the synthesized discrete program, a full-domain argmax
+        equivalence proof over all $p^2$ inputs, and a bounded logit-equivalence
+        proof for faithful trigonometric decompilations
+        (Section~\ref{sec:results}).
+  \item \textbf{A measured circuit-health statistic}: the fraction of spectral
+        energy carried by three frequencies separates a network that has learned
+        the algorithm ($95$--$99\%$) from one that has memorised the table
+        ($27$--$43\%$), and tracks the accuracy that the decompiled circuit
+        actually achieves (Section~\ref{sec:results}).
+  \item \textbf{An open, reproducible implementation} with a 107-test suite in
+        which the generated C is compiled and executed on every input of the
+        domain, and every generated Python module is executed and compared
+        against the IR's reference semantics.
+\end{enumerate}
+
+% -----------------------------------------------------------------------------
+\section{Related work}
+\label{sec:related}
+
+\paragraph{Mechanistic interpretability.}
+Circuit analysis decomposes a network into heads and MLP neurons and measures
+their causal contribution \citep{elhage2021framework,nanda2023grokking,
+olsson2022incontext,wang2022interpretability}. Attribution patching
+\citep{kramar2024atp} provides a linear approximation to activation patching,
+which we expose in \code{probing.py} but do not rely on for the proof.
+\citet{chughtai2023group} recover group operations from learned representations;
+our Fourier projection is the modular-arithmetic instance of the same idea.
+
+\paragraph{Program synthesis from networks.}
+Extracting programs from RNNs and Transformers has a long history, from
+automata extraction \citep{weiss2018extracting} to differentiable program
+induction. Most such methods return a program with empirical, not formal,
+agreement. \citet{yao2024causal} use causal abstraction to relate a network to a
+symbolic algorithm; our contribution is to close the loop with an SMT proof and
+verified code generation.
+
+\paragraph{Formal verification of neural networks.}
+Complete verifiers such as Marabou \citep{katz2019marabou} and $\alpha,\beta$-CROWN
+\citep{zhang2018crown} prove input-output properties of piecewise-linear networks.
+They target robustness specifications and do not produce programs. Conversely,
+verified compilation (CompCert \citep{leroy2009compcert}) proves that a compiler
+preserves semantics. We borrow the ethos of the latter---semantics preservation
+with a machine-checked argument---and apply it to network$\to$program translation.
+
+\paragraph{Grokking.}
+\citet{power2022grokking} observed delayed generalisation on algorithmic
+datasets; \citet{nanda2023grokking} identified the Fourier circuit responsible.
+Our training setup follows theirs.
+
+% -----------------------------------------------------------------------------
+\section{Setup}
+\label{sec:setup}
+
+\subsection{Task and architecture}
+
+Let $p$ be a prime. The dataset is the complete table
+$\{(a,b)\mapsto (a+b)\bmod p : a,b\in\Zp\}$, split into a training fraction
+(30\%) and a held-out fraction. An example is the three-token sequence
+$[a,\,b,\,\mathrm{EQ}]$; the prediction is read from the residual stream at the
+$\mathrm{EQ}$ position.
+
+The model is a one-layer, attention-only Transformer with no LayerNorm:
+\begin{align}
+  x^{(0)}_t &= W_E[\text{tok}_t] \in \R^{d}, \\
+  q_t, k_t, v_t &= x^{(0)}_t W_Q,\; x^{(0)}_t W_K,\; x^{(0)}_t W_V, \\
+  A_{ts} &= \operatorname{softmax}_s\!\left(\tfrac{1}{\sqrt{d_h}} q_t^\top k_s\right), \\
+  x^{(1)}_t &= x^{(0)}_t + \sum_{s} A_{ts}\, v_s\, W_O, \\
+  \ell &= x^{(1)}_{\mathrm{EQ}}\, W_U \in \R^{p}.
+\end{align}
+All matrices are bias-free, so the network is a composition of linear maps and
+softmaxes. This is deliberate: any bias or normalisation would have to be
+translated into SMT, and LayerNorm in particular destroys the clean bilinear
+structure that makes the circuit interpretable.
+
+\subsection{Effective circuits}
+
+Following \citet{elhage2021framework}, we summarise each head by two bilinear
+forms and their token-space images:
+\begin{equation}
+  \WQK = W_Q W_K^\top \in \R^{d\times d}, \qquad
+  \WOV = W_V W_O^\top \in \R^{d\times d},
+\end{equation}
+\begin{equation}
+  M^{\text{att}} = W_E \WQK W_E^\top \in \R^{V\times V}, \qquad
+  M^{\text{logit}} = W_E \WOV W_U \in \R^{V\times p}.
+\end{equation}
+$M^{\text{logit}}_{v,c}$ is the contribution of a unit attention weight on source
+token $v$ to the logit of class $c$; $M^{\text{att}}_{u,v}$ is the score of key
+$v$ for query $u$ (up to the constant scale).
+
+% -----------------------------------------------------------------------------
+\section{Method}
+\label{sec:method}
+
+\subsection{Circuit discovery}
+
+For every head we (i) zero-ablate its output slice $W_O[:,h,:]$ and measure the
+accuracy and logit-difference damage on the whole domain, and (ii) compute the
+exact per-head, per-source-token direct logit attribution
+\begin{equation}
+  \ell_c \;=\; \bigl(W_E[\mathrm{EQ}]W_U\bigr)_c
+  \;+\; \sum_{h}\sum_{j} A_{h,\mathrm{EQ},j}\,
+        \bigl(W_E[j]\,W_{V,h}W_{O,h}W_U\bigr)_c ,
+  \label{eq:dla}
+\end{equation}
+which holds exactly because the residual stream is linear. Heads are ranked by
+zero-ablation damage; the active set is the collection of heads whose removal
+costs more than a threshold.
+
+The Fourier support of the circuit is obtained by applying the real DFT to the
+token-indexed maps,
+\begin{equation}
+  \hat M(k) = \frac{1}{p}\sum_{x=0}^{p-1} M_{x,c}\,e^{-2\pi i kx/p},
+\end{equation}
+and reporting the frequencies that concentrate the energy. A grokked network is
+sparse in this basis; a random network is not, which makes the statistic a
+usable circuit-health signal rather than a foregone conclusion.
+
+\subsection{Symbolic program synthesis}
+
+The synthesizer receives the circuit specification (active heads, frequency
+support, shift-invariance of $M^{\text{logit}}$) and runs two stages.
+
+\paragraph{Stage 1: discrete motif identification.}
+From a DSL of algorithmic motifs (addition, subtraction, multiplication,
+projections) we instantiate every candidate $P$, evaluate it on all $p^2$
+inputs, and compare with the network's argmax. A motif is accepted only if the
+agreement is exact. Because the domain is finite, this check is exhaustive: it
+is a proof of \emph{agreement on the domain}, not a generalisation claim, and the
+SMT proof in Section~\ref{sec:verification} re-establishes it symbolically.
+
+\paragraph{Stage 2: faithful trigonometric decompilation.}
+If no motif is exact---for example for an undertrained or random network---we
+emit the circuit itself. Fitting each head's score function and each column of
+$M^{\text{logit}}$ with a real Fourier series over $\Zp$ gives the IR program
+\begin{align}
+  s_{h,j} &= \sum_{k\in K} a_{h,j,k}\cos(\omega_k j) + b_{h,j,k}\sin(\omega_k j),
+  \qquad \omega_k = 2\pi k/p,\\
+  P &= \operatorname{softmax}_j(s_{h,j}), \\
+  \ell_c &= \beta_c + \sum_{h,j} P_{h,j}\, g_{h,c}(j), \qquad
+  \text{answer} = \argmax_c \ell_c ,
+\end{align}
+with $g_{h,c}$ the truncated Fourier series of $M^{\text{logit}}_{\cdot,c}$. The
+truncation error is measured and reported; with $|K|$ frequencies the
+reconstruction is exact whenever $2|K|+1 \ge p$.
+
+\subsection{IR and code generation}
+
+The IR (\code{ast\_nodes.py}) is a small expression language with three
+evaluators: NumPy reference semantics, outward-rounded interval semantics, and
+two source emitters. Nodes cover the algorithmic primitives of interest
+(\code{Mod}, \code{Add}, \code{Sin}, \code{Cos}, \code{Linear}, \code{Threshold},
+\code{ArgMax}, \code{IfElse}) plus \code{Softmax} and its projections. SymPy is
+used only as a *conservative* simplifier: a rewrite is kept only if it is
+numerically equivalent on a fixed grid.
+
+The Python emitter produces a self-contained module with a docstring, a stable
+softmax/argmax implementation, and a ``\code{if \_\_name\_\_ == '\_\_main\_\_'}'' demo.
+The C emitter produces ISO C99: integer types when the program is integer-valued
+(bit-exact), \code{double} otherwise, static tables for linear maps, and no heap
+allocation, so there is nothing to leak.
+
+% -----------------------------------------------------------------------------
+\section{Formal verification}
+\label{sec:verification}
+
+\subsection{From floats to reals}
+
+\begin{definition}[Certified enclosure]
+For an activation $x$ computed by the IEEE-754 forward pass, an interval
+$[\underline{x},\overline{x}]$ is a certified enclosure if the computed value
+provably lies inside it, using only the semantics of IEEE-754 round-to-nearest
+and outward rounding, with no reference to the value being checked.
+\end{definition}
+
+We propagate enclosures through the network. For a dot product of length $n$,
+Higham's standard bound gives
+\begin{equation}
+  \bigl|\operatorname{fl}(\langle x,w\rangle) - \langle x,w\rangle\bigr|
+  \le \gamma_n \sum_i |x_i w_i|, \qquad
+  \gamma_n = \frac{n u}{1-nu}, \quad u = 2^{-53}.
+\end{equation}
+Applying this to every matmul, an interval softmax (monotonicity of $\exp$ plus
+outward-rounded division and the simplex identity $\sum_j P_j = 1$), and
+outward-rounded residual additions yields enclosures whose width is at most
+$\sim 10^{-13}$ for the models in this paper---twelve orders of magnitude
+tighter than the logit margins of a trained network, but computed without ever
+looking at the answer.
+
+\subsection{SMT encodings}
+
+\paragraph{Specification (exact, integer).}
+Wrap the IR program in a quantified Presburger formula:
+\begin{equation}
+  \forall a,b \in [0,p): \bigl(P(a,b) = a+b \wedge P(a,b) < p\bigr)
+  \;\vee\; \bigl(P(a,b) = a+b-p \wedge P(a,b) \ge 0\bigr).
+\end{equation}
+No floating point appears. The negation is handed to Z3; \code{unsat} means the
+synthesized program \emph{is} modular addition, independent of the network.
+
+\paragraph{Model equivalence (rational, full domain).}
+For each input $x=(a,b)$ we introduce one real variable $P_{h,j}$ per attention
+probability, constrain $0 \le P_{h,j} \le 1$, $\sum_j P_{h,j} = 1$, and
+$P_{h,j} \in [\underline{P}_{h,j}, \overline{P}_{h,j}]$ (the certified
+enclosure), and write the logits as exact rational linear forms in these
+variables using the weights interpreted as exact binary rationals. The query is
+\begin{equation}
+  \bigvee_{x \in \Zp^2} \Bigl(\text{enclosures}(x) \;\wedge\;
+  \bigvee_{c \ne P(x)} \ell_c(x) \ge \ell_{P(x)}(x)\Bigr).
+  \label{eq:query}
+\end{equation}
+Classes with $\overline{\ell}_c < \underline{\ell}_{P(x)}$ cannot satisfy the
+inner disjunction (a sound, exact pruning of *classes*, never of inputs). The
+negation of \eqref{eq:query} is what we prove.
+
+\begin{theorem}[Soundness of the equivalence query]
+\label{thm:sound}
+If the certified enclosures contain the forward-pass values (Definition 1) and
+\eqref{eq:query} is unsatisfiable, then for every input in $\Zp^2$ the network's
+argmax equals the program's output.
+\end{theorem}
+\begin{proof}[Proof sketch]
+Suppose some input $x^\star$ had a different argmax, realised by the true
+attention assignment $P^\star = P(x^\star)$ and a class $c^\star \ne P(x^\star)$
+with $\ell_{c^\star}(x^\star) \ge \ell_{P(x^\star)}(x^\star)$. By Definition 1,
+$P^\star$ satisfies the enclosure and simplex constraints; by exact rational
+arithmetic, the linear forms evaluate to the true logits. Then
+$(x^\star, P^\star)$ is a satisfying assignment of \eqref{eq:query}, contradicting
+unsatisfiability.
+\end{proof}
+
+\paragraph{Bounded logit equivalence.}
+For faithful trig decompilations the target is numeric:
+$|\ell_c^{\text{net}}(x) - \ell_c^{\text{prog}}(x)| \le \varepsilon$ for all $x$
+and $c$, encoded by declaring each network logit inside its enclosure and asking
+for a deviation beyond $\varepsilon$.
+
+\paragraph{Robustness.}
+Widening every enclosure by $\pm\delta$ yields a strictly stronger theorem: the
+argmax is invariant to a $\delta$-perturbation of every attention probability.
+This is also the regime in which the linear SMT solver performs real work, since
+the enclosure-based pruning no longer decides the query.
+
+\subsection{Counterexample-guided refinement}
+
+If the query is satisfiable, the witness is replayed through the real network.
+A genuine mismatch triggers refinement: the synthesizer is asked for the
+faithful trigonometric circuit, which is then verified with the bounded-logit
+theorem. A witness that only touches the edge of an enclosure is reported as
+\code{unknown}---never as a proof and never as a counterexample.
+
+% -----------------------------------------------------------------------------
+\section{Experiments}
+\label{sec:results}
+
+\subsection{Setup}
+
+Reference configuration: $p=59$, $d=128$, $H=4$ heads, one layer, 80{,}768
+parameters; 30\% of the 3{,}481 input pairs for training; full-batch AdamW with
+$\beta=(0.9,0.98)$, weight decay $1.0$, and a learning rate annealed from
+$10^{-2}$ to $2\%$ of its value by a half-cosine schedule over 40{,}000 epochs.
+All runs are single-threaded on CPU and bitwise reproducible from the seed.
+Smaller instances ($p=13$, $p=23$) use the same recipe at $d=64$; a
+\emph{memorising} reference checkpoint ($p=59$, constant $\text{lr}=10^{-3}$,
+$40{,}000$ epochs) is kept for contrast.
+
+\subsection{From memorisation to a circuit}
+\label{sec:trajectory}
+
+Table~\ref{tab:training} reports the optimisation trajectory. The network
+memorises first --- training accuracy $100\%$ with held-out accuracy at the
+chance level of $1/59\approx1.7\%$ --- and then, between epochs 7{,}500 and
+10{,}000, crosses into a generalising regime whose held-out accuracy settles at
+$87.0\%$. This is the characteristic signature of grokking
+\citep{power2022grokking}; in our architecture the transition is sharp and
+early, but the run stops short of exact generalisation (Section~\ref{sec:notclaimed}).
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{@{}rrrr@{}}
+\toprule
+Epoch & Train acc. & Test acc. & Test loss \\
+\midrule
+2{,}500 & 1.000 & 0.298 & 12.65 \\
+5{,}000 & 1.000 & 0.304 & 11.32 \\
+7{,}500 & 1.000 & 0.314 & 9.88 \\
+10{,}000 & 0.993 & \textbf{0.708} & 1.00 \\
+15{,}000 & 1.000 & 0.870 & 0.43 \\
+25{,}000 & 1.000 & 0.821 & 0.69 \\
+40{,}000 & 1.000 & 0.870 & 0.97 \\
+\bottomrule
+\end{tabular}
+\caption{Grokking trajectory on $a+b \bmod 59$ (30\% training data, $d=128$,
+$H=4$, cosine-annealed AdamW). The transition between epochs 7{,}500 and
+10{,}000 moves held-out accuracy from chance to $71\%$ in 2{,}500 steps.}
+\label{tab:training}
+\end{table}
+
+Table~\ref{tab:circuit} contrasts the recovered circuit of this checkpoint with
+that of the memoriser. Three statistics separate them.
+
+\emph{Spectral concentration.} In the generalising network three frequencies
+($k=6,11,15$ for three of the four heads; $k=15,29,14$ for the fourth) carry
+$94.8$--$98.9\%$ of the spectral energy of each head's token$\to$logit map. In
+the memoriser the top three frequencies carry only $26.7$--$43.2\%$: its map is
+a lookup table, spread over the whole basis.
+
+\emph{Causal load.} Zero-ablating any single head's output projection costs
+$71.7$--$73.8\%$ accuracy in the generalising network (every head is part of the
+computation) but only $37.4$--$39.2\%$ in the memoriser, where the work is
+replicated.
+
+\emph{Truncation.} Cutting the decompiled circuit to $|K|=6$ frequencies per
+head leaves a logit error of $7.0$ in the generalising network --- the
+reconstruction needs the tail --- while the memoriser needs the full basis
+$|K|=29$ to be exact at all. Neither network is the textbook sparse circuit;
+both are, however, \emph{exactly} representable, which is what the proof needs.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+Head & $\Delta$acc.\ (zero-ablation) & $\Delta$logit & top frequencies & top-3 energy \\
+\midrule
+\multicolumn{5}{@{}l}{\emph{generalising checkpoint} (held-out $87.0\%$)}\\
+L0H0 & $0.717$ & $2.86$ & $6,\,11,\,15$ & $0.949$ \\
+L0H1 & $0.729$ & $11.92$ & $15,\,29,\,14$ & $0.989$ \\
+L0H2 & $0.738$ & $2.78$ & $6,\,11,\,15$ & $0.956$ \\
+L0H3 & $0.731$ & $2.75$ & $11,\,6,\,15$ & $0.948$ \\
+\midrule
+\multicolumn{5}{@{}l}{\emph{memorising checkpoint} (held-out $29.5\%$)}\\
+L0H0 & $0.388$ & $3.15$ & $11,\,15,\,29$ & $0.432$ \\
+L0H1 & $0.374$ & $2.66$ & $15,\,11,\,23$ & $0.303$ \\
+L0H2 & $0.392$ & $3.08$ & $11,\,26,\,15$ & $0.392$ \\
+L0H3 & $0.380$ & $2.49$ & $11,\,17,\,23$ & $0.267$ \\
+\bottomrule
+\end{tabular}
+\caption{Recovered circuits. ``Top-3 energy'' is the fraction of the spectral
+energy of $M^{\text{logit}}$ carried by the three dominant frequencies;
+``$\Delta$acc.'' is the accuracy lost when the head's output projection is
+zeroed on the full domain.}
+\label{tab:circuit}
+\end{table}
+
+\subsection{Decompilation and proof}
+
+Stage 1 finds no discrete motif for either $p=59$ checkpoint, because the
+network's argmax is not $a+b \bmod p$ everywhere: agreement with the discrete
+algorithm is $90.9\%$ (generalising) and $50.2\%$ (memorising) over the domain.
+Stage 2 therefore emits the faithful trigonometric circuit, \emph{which
+reproduces the network's argmax on all 3{,}481 inputs} and is proved equivalent
+by Z3 over the whole domain (Table~\ref{tab:verification}). The emitted C file
+(2.1\,MB, 5{,}763 IR nodes) compiles in 2.7\,s with
+\code{-std=c99 -O3 -Wall -Wextra -pedantic} and \emph{no diagnostics}, and its
+output is bit-identical to the emitted Python on every input (maximum absolute
+difference $0.0$).
+
+Where the network \emph{is} a discrete algorithm, Stage 1 recovers it. A small
+network trained to fit the complete $p=5$ table is decompiled to
+\begin{center}
+\code{def add\_mod\_p(a, b): return (a + b) \% 5}
+\end{center}
+and both the specification and full-domain equivalence are proved
+(Table~\ref{tab:verification}, first row); the emitted C is five lines and
+compiles under \code{-Werror}.
+
+A randomly initialised $p=11$ network --- the worst case for any decompiler ---
+is also handled: the faithful circuit needs the full basis ($|K|=5$), reproduces
+the argmax on all 121 inputs with truncation error $5\times10^{-15}$
+(scores) and $2\times10^{-14}$ (logits), and is proved equivalent.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{@{}llll@{}}
+\toprule
+Target & Theorem & Domain & Result \\
+\midrule
+$p=5$ network (motif) & \code{spec} & all $(a,b)$ & proved, 0.01\,s \\
+$p=5$ network (motif) & \code{model\_equivalence} & 25 inputs & proved \\
+$p=59$ generalising & \code{model\_equivalence} & 3{,}481 inputs & proved \\
+$p=59$ generalising & \code{logit\_equivalence} ($\varepsilon=10^{-4}$) & $3{,}481\times59$ bounds & proved \\
+$p=59$ memorising & \code{model\_equivalence} & 3{,}481 inputs & proved \\
+$p=11$ random & \code{model\_equivalence} & 121 inputs & proved \\
+$p=11$ random & \code{logit\_equivalence} ($\varepsilon=10^{-4}$) & $121\times11$ bounds & proved \\
+$p=13$ generalising & \code{model\_equivalence}, $\delta=10^{-3}$ & 169 inputs & proved (29 SMT) \\
+$p=13$ generalising & \code{model\_equivalence}, $\delta=10^{-2}$ & 169 inputs & refuted (witness) \\
+\bottomrule
+\end{tabular}
+\caption{Proof obligations discharged by Z3. ``enclosure'' means the input was
+decided by exact rational comparison of certified bounds; ``SMT'' means the
+solver reasoned inside the simplex constraint. Every query covers the full
+domain; no input is sampled or skipped. The last two rows bound the robustness
+radius we can prove: the argmax survives a $\pm10^{-3}$ perturbation of every
+attention probability and provably does not survive $\pm10^{-2}$.}
+\label{tab:verification}
+\end{table}
+
+\subsection{Where the SMT solver does real work}
+
+For every proved query in Table~\ref{tab:verification} the certified enclosures
+are tight enough that all inputs are decided by exact rational comparison and
+Z3's only job is to confirm unsatisfiability (0 SMT-decided inputs). Slackening
+the enclosures changes that. Table~\ref{tab:robustness} sweeps the attention
+slack $\delta$ on the $p=13$ checkpoint: at $\delta=10^{-3}$ twenty-nine of the
+169 inputs can no longer be pruned and are discharged inside the solver, and the
+proved statement is the strictly stronger robustness claim; at $\delta=10^{-2}$
+the prover finds a genuine witness and reports \code{refuted}. Reporting
+\code{refuted} rather than \code{unknown} there is a deliberate design choice:
+for a robustness statement a witness inside the perturbation set \emph{is} a
+counterexample, even though the unperturbed network still agrees with the
+program on that input.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{@{}rlr@{}}
+\toprule
+$\delta$ & verdict & inputs decided by Z3 \\
+\midrule
+$0$ & proved & $0/169$ \\
+$10^{-3}$ & proved & $29/169$ \\
+$10^{-2}$ & refuted (witness) & $169/169$ \\
+\bottomrule
+\end{tabular}
+\caption{Robustness sweep on the $p=13$ checkpoint. $\delta$ is a uniform slack
+added to every certified attention enclosure.}
+\label{tab:robustness}
+\end{table}
+
+\subsection{Ablations and cost}
+
+\begin{itemize}[leftmargin=1.4em,itemsep=2pt]
+  \item \emph{Truncation.} On the $p=59$ generalising checkpoint, cutting the
+        circuit to $|K|=1,2,3,6$ frequencies per head leaves logit errors of
+        $3.4\times10^{1}$, $2.0\times10^{1}$, $1.2\times10^{1}$,
+        $7.0\times10^{0}$; every truncation is \code{refuted} by the argmax
+        proof, and only the full basis ($|K|=29$, error $2.1\times10^{-13}$)
+        is proved. For the random $p=11$ network, by contrast, the full basis
+        $|K|=5$ is exact to $2\times10^{-14}$.
+  \item \emph{Enclosure width.} With 2-ulp outward padding per operation the
+        logit enclosures are within $1.4\times10^{-14}$ of the float64 forward
+        pass, validated on all inputs by the test suite.
+  \item \emph{Runtime.} Circuit discovery $<1$\,s; synthesis 0.08\,s ($p=13$),
+        0.4\,s ($p=23$), 13.7\,s ($p=59$); the full-domain proof 0.4\,s,
+        1.9\,s and 94\,s respectively (dominated by building the certified
+        enclosures, not by Z3); code generation $<1$\,s; C compilation 2.7\,s
+        for a 2.1\,MB source. Training dominates everything (40 minutes on one
+        CPU core at $p=59$).
+  \item \emph{Codegen equivalence.} The code-generation tests compile the
+        emitted C with \code{-Werror} and compare the executable's output with
+        the IR on every input; the Python tests \code{exec} the generated module
+        and do the same. A separate end-to-end check compares the emitted Python
+        and C of the $p=59$ circuit on all 3{,}481 inputs (difference $0.0$).
+  \item \emph{Deployment gap.} float32 vs.\ float64 logits differ by at most
+        $3.1\times10^{-5}$ ($p=59$), $1.4\times10^{-4}$ ($p=13$) and
+        $2.1\times10^{-4}$ ($p=23$) in absolute value; the proof is about the
+        float64 network and this gap is reported, never assumed away.
+\end{itemize}
+
+\subsection{What is not claimed}
+\label{sec:notclaimed}
+
+The $p=59$ run of Table~\ref{tab:training} reaches $87.0\%$ held-out accuracy,
+not $100\%$, and the small-$p$ runs behave similarly ($76.5\%$ at $p=13$,
+$72.5\%$ at $p=23$). We tried constant-rate AdamW at $\text{lr}=10^{-3}$ for
+40{,}000 epochs, five weight-decay/learning-rate/initialisation combinations at
+$p=13$, and training fractions from $0.2$ to $1.0$; none produced exact
+generalisation in this architecture (attention-only, no LayerNorm, no MLP). We
+therefore report two things separately and do not conflate them: (i) the
+\emph{decompiler} is exact and proved for every network we tried, including the
+partially generalising ones; (ii) the claim that a \emph{fully} grokked network
+decompiles into the two-line modular-addition program is demonstrated only on a
+network trained on the complete domain (Section~\ref{sec:results}, first row of
+Table~\ref{tab:verification}), and remains an extrapolation for the held-out
+setting. The spectral statistic of Table~\ref{tab:circuit} is our best evidence
+that the gap is one of degree, not of kind: the generalising network already
+concentrates $95$--$99\%$ of its spectral energy in three frequencies.
+
+% -----------------------------------------------------------------------------
+\section{Discussion and limitations}
+\label{sec:discussion}
+
+\paragraph{What the proof does and does not say.}
+The theorem quantifies over the finite domain of inputs and over the certified
+enclosures of the attention probabilities; it does not quantify over attention
+distributions the network cannot produce. The verified object is the float64
+forward pass; the float32 deployment gap is measured (order $10^{-5}$ absolute on
+logits) and reported alongside every proof. Softmax is not an SMT primitive, so
+its semantics are carried by the enclosures rather than by the solver; a fully
+symbolic treatment of softmax would require transcendental-function reasoning
+that current SMT solvers do not provide.
+
+\paragraph{Scope.}
+The symbolic encoder and faithful circuit target one-layer attention-only
+models. Deeper models, MLPs and other tasks can be synthesised and verified
+through the enclosure path, with interval coefficients instead of exact rational
+ones, but we do not claim those experiments here. Motif identification is
+exhaustive over a small DSL; programs outside the DSL fall back to the faithful
+circuit rather than to open-ended synthesis.
+
+\paragraph{Broader impact.}
+Turning a network into auditable code is a step towards accountability for
+deployed models, and a proof-carrying artefact is easier to review than a weight
+matrix. The same machinery could be misused to certify a circuit that implements
+a harmful algorithm; the method is agnostic to the task semantics, which is
+precisely why the specification step is kept explicit and human-readable.
+
+% -----------------------------------------------------------------------------
+\section{Conclusion}
+\label{sec:conclusion}
+
+We have shown that a Transformer trained on modular arithmetic can be
+decompiled into readable Python and allocation-free C, with the equivalence
+between network and program proved by an SMT solver over the whole input domain:
+into the two-line algorithm when the network implements it, and into its exact
+trigonometric circuit otherwise. The key technical ingredient is a sound and
+tight bridge between IEEE-754 arithmetic and the exact rationals that the solver
+understands. The measured spectral statistic --- $95$--$99\%$ of the energy of a
+generalising network in three frequencies, versus $27$--$43\%$ for a memoriser
+--- is a circuit-health signal that future work can use to decide when an
+extracted program is the *algorithm* rather than a description of one network.
+We release the implementation, the tests and the generation pipeline so that
+every claim can be re-derived end to end from a single seed.
+
+% -----------------------------------------------------------------------------
+\section*{Reproducibility statement}
+All experiments are produced by \code{make all} in the accompanying repository.
+Seeds are fixed (\code{torch.manual_seed(42)}, \code{np.random.seed(42)}), the
+data split is generated by its own seeded generator, and training is full-batch
+with a pinned BLAS thread count, which makes runs bitwise reproducible
+(a unit test asserts this). Every command writes a JSON artefact; the numbers in
+Tables~\ref{tab:training}--\ref{tab:verification} are copied from those files.
+
+% -----------------------------------------------------------------------------
+\begin{thebibliography}{99}
+\small
+
+\bibitem{chughtai2023group}
+B.~Chughtai, L.~Chan, and N.~Nanda.
+\newblock A toy model of universality: Reverse engineering how networks learn
+  group multiplication.
+\newblock \emph{arXiv:2306.03030}, 2023.
+
+\bibitem{elhage2021framework}
+N.~Elhage, N.~Nanda, C.~Olsson, et al.
+\newblock A mathematical framework for Transformer circuits.
+\newblock \emph{Transformer Circuits Thread}, 2021.
+
+\bibitem{katz2019marabou}
+G.~Katz, D.~A. Huang, D.~Ibeling, et al.
+\newblock The Marabou framework for verification and analysis of deep neural
+  networks.
+\newblock In \emph{Computer Aided Verification (CAV)}, 2019.
+
+\bibitem{kramar2024atp}
+J.~Kram\'ar, N.~Nanda, and B.~Niklaus.
+\newblock AtP*: An efficient and scalable method for localizing LLM behaviour to
+  components.
+\newblock \emph{arXiv:2403.00745}, 2024.
+
+\bibitem{leroy2009compcert}
+X.~Leroy.
+\newblock Formal verification of a realistic compiler.
+\newblock \emph{Communications of the ACM}, 52(7):107--115, 2009.
+
+\bibitem{nanda2023grokking}
+N.~Nanda, L.~Chan, T.~Lieberum, J.~Smith, and J.~Steinhardt.
+\newblock Progress measures for grokking via mechanistic interpretability.
+\newblock In \emph{International Conference on Learning Representations (ICLR)},
+  2023.
+
+\bibitem{olsson2022incontext}
+C.~Olsson, N.~Elhage, N.~Nanda, et al.
+\newblock In-context learning and induction heads.
+\newblock \emph{Transformer Circuits Thread}, 2022.
+
+\bibitem{power2022grokking}
+A.~Power, Y.~Burda, H.~Edwards, I.~Babuschkin, and V.~Misra.
+\newblock Grokking: Generalization beyond overfitting on small algorithmic
+  datasets.
+\newblock \emph{arXiv:2201.02177}, 2022.
+
+\bibitem{wang2022interpretability}
+K.~Wang, A.~Variengien, A.~Conmy, B.~Shlegeris, and J.~Steinhardt.
+\newblock Interpretability in the wild: a circuit for indirect object
+  identification in GPT-2 small.
+\newblock In \emph{ICLR}, 2023.
+
+\bibitem{weiss2018extracting}
+G.~Weiss, Y.~Goldberg, and E.~Yahav.
+\newblock Extracting automata from recurrent neural networks using queries and
+  counterexamples.
+\newblock In \emph{International Conference on Machine Learning (ICML)}, 2018.
+
+\bibitem{yao2024causal}
+Y.~Yao, L.~Zhang, et al.
+\newblock Causal abstraction for faithful model explanation.
+\newblock \emph{arXiv:2406.00777}, 2024.
+
+\bibitem{zhang2018crown}
+H.~Zhang, T.-W. Weng, P.-Y. Chen, C.-J. Hsieh, and L.~Daniel.
+\newblock Efficient neural network robustness certification with general
+  activation functions.
+\newblock In \emph{NeurIPS}, 2018.
+
+\end{thebibliography}
+
+% -----------------------------------------------------------------------------
+\appendix
+\section{Implementation details}
+\label{app:impl}
+
+\paragraph{Enclosure implementation.}
+\code{compute\_logit\_bounds} propagates an (\code{lo}, \code{hi}) pair per
+activation. Matmuls use the corner method plus a $\gamma_n$ error budget;
+softmax shifts by the upper bound of the maximum score (making the exponential
+well conditioned) and computes monotone exponential bounds padded by two ulps;
+each probability is bounded by the ratio of an extreme numerator and an extreme
+denominator, which is sound by construction. All padding uses
+\code{numpy.nextafter}.
+
+\paragraph{Z3 encoding of the IR.}
+Integer programs are translated with Z3's Euclidean \code{Mod}; real programs use
+exact rational constants built from \code{fractions.Fraction}. Nodes without an
+SMT counterpart (\code{Sin}, \code{Cos}, \code{Softmax}, \code{ArgMax}) raise
+\code{NotImplementedError}, and the verifier falls back to the enclosure path
+instead of silently approximating.
+
+\paragraph{Batching.}
+The equivalence query is split into batches (\code{VerifyConfig.batch\_size},
+default 128). Each batch is a single \code{SolverFor("QF\_LRA")} call, so the
+solver sees the disjunction over thousands of inputs at once.
+
+\paragraph{Testing.}
+The suite contains 107 tests, including an end-to-end test of the CLI. Codegen tests execute the emitted Python and
+compile the emitted C with \code{-Werror}, then compare against the IR on the
+complete domain. Verifier tests check enclosure soundness against the float64
+forward pass on every input, and check that a deliberately wrong program is
+refuted with a genuine counterexample.
+
+\section{IR grammar}
+\label{app:grammar}
+
+\begin{align*}
+  e &::= c \mid x \mid -e \mid e \pm e \mid e \cdot e \mid e / e
+       \mid e \bmod m \mid \sin e \mid \cos e \\
+    &\quad\mid \textstyle\sum_i e_i \mid W e \mid \mathrm{softmax}(e_1,\dots,e_n)
+       \mid \mathrm{softmax}(\cdot)[i] \\
+    &\quad\mid \mathrm{step}(e - t) \mid \argmax_i(e_1,\dots,e_n)
+       \mid \mathrm{if}\ b\ \mathrm{then}\ e_1\ \mathrm{else}\ e_2 ,
+\end{align*}
+with $b$ a comparison or boolean combination thereof. Programs are pairs
+$(x_1,\dots,x_n \mapsto e)$ plus the modulus of the ambient ring.
+
+\end{document}
