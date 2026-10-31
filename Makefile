@@ -15,16 +15,21 @@ BIN     = $(VENV)/bin
 C2C     = $(PYTHON) demo/cli.py
 
 P        ?= 59
-EPOCHS   ?= 40000
+EPOCHS   ?= 30000
 LR       ?= 1e-2
 SCHEDULE ?= cosine
 WD       ?= 1.0
-FRACTION ?= 0.3
+#: 0.7 reproduces the grokked reference checkpoint; 0.3 gives the grokking-onset
+#: run that stalls at 87% held-out accuracy.
+FRACTION ?= 0.7
+SEED     ?= 3
 D_MODEL  ?= 128
 N_HEADS  ?= 4
 THREADS  ?= 2
 
-CHECKPOINT ?= artifacts/checkpoints/add$(P).pt
+#: name of the checkpoint trained/consumed by extract/decompile/verify/export.
+#: Override to use a memoriser:  make decompile CHECKPOINT=artifacts/checkpoints/add59.pt FRACTION=0.3
+CHECKPOINT ?= artifacts/checkpoints/g$(P).pt
 OUT        ?= artifacts
 SLACK      ?= 0.0
 
@@ -36,7 +41,7 @@ help:
 	@echo "  test       run the full pytest suite"
 	@echo "  test-fast  run the suite without the training fixtures"
 	@echo "  lint       py_compile every module and check formatting with ruff (if present)"
-	@echo "  train      train the reference model            (P=$(P), epochs=$(EPOCHS))"
+	@echo "  train      train the reference model   (P=$(P), frac=$(FRACTION), seed=$(SEED), epochs=$(EPOCHS))"
 	@echo "  extract    identify the circuit                 (needs a checkpoint)"
 	@echo "  decompile  synthesize + emit Python/C           (needs a checkpoint)"
 	@echo "  verify     discharge the Z3 proof obligations   (needs a checkpoint)"
@@ -68,7 +73,7 @@ lint:
 train:
 	$(C2C) train --p $(P) --d-model $(D_MODEL) --n-heads $(N_HEADS) \
 		--epochs $(EPOCHS) --lr $(LR) --lr-schedule $(SCHEDULE) \
-		--weight-decay $(WD) --train-fraction $(FRACTION) \
+		--weight-decay $(WD) --train-fraction $(FRACTION) --seed $(SEED) \
 		--torch-threads $(THREADS) --out $(CHECKPOINT)
 
 extract:

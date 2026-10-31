@@ -176,20 +176,22 @@ and are bit-reproducible for a fixed number of threads).
 ## 5. Quickstart
 
 ```bash
-# train (grokking regime; ~30 min on 2 CPU cores at p=59)
-python demo/cli.py train --p 59 --epochs 40000 --checkpoint-every 1000 \
-    --out artifacts/checkpoints/add59.pt
+# train the reference checkpoint (~48 min on one CPU core at p=59; this is the
+# configuration that groks: 70% of the domain, cosine-annealed lr 1e-2, seed 3)
+python demo/cli.py train --p 59 --epochs 30000 --train-fraction 0.7 --seed 3 \
+    --checkpoint-every 1000 --out artifacts/checkpoints/g70.pt
 
 # 1. locate the circuit (head ablation + DFT projection)
-python demo/cli.py extract-circuit --checkpoint artifacts/checkpoints/add59.pt
+python demo/cli.py extract-circuit --checkpoint artifacts/checkpoints/g70.pt \
+    --train-fraction 0.7
 
 # 2. decompile to a symbolic program, emit Python + C
-python demo/cli.py decompile --checkpoint artifacts/checkpoints/add59.pt \
-    --out artifacts/decompiled
+python demo/cli.py decompile --checkpoint artifacts/checkpoints/g70.pt \
+    --train-fraction 0.7 --out artifacts/decompiled
 
 # 3. prove equivalence with Z3
-python demo/cli.py verify --checkpoint artifacts/checkpoints/add59.pt \
-    --json artifacts/verification.json
+python demo/cli.py verify --checkpoint artifacts/checkpoints/g70.pt \
+    --train-fraction 0.7 --json artifacts/verification.json
 ```
 
 The generated C compiles with
