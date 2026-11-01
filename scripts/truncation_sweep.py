@@ -95,7 +95,7 @@ def main(argv=None) -> int:
     parser.add_argument("checkpoint")
     parser.add_argument("--budget", type=int, default=None, help="max |K| (default: p//2)")
     parser.add_argument("--train-fraction", type=float, default=0.3)
-    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--seed", type=int, default=3, help="data-split seed (3 = the training split)")
     parser.add_argument("--out", default=None)
     parser.add_argument(
         "--no-verify",

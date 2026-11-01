@@ -1,0 +1,45 @@
+{
+  "generated_by": "scripts/measure_export.py",
+  "seed": 3,
+  "measurements": [
+    {
+      "checkpoint": "artifacts/checkpoints/g70.pt",
+      "p": 59,
+      "motif": "add_mod",
+      "n_nodes": 4,
+      "n_inputs": 3481,
+      "python_bytes": 464,
+      "c_bytes": 743,
+      "c_lines": 35,
+      "gcc_flags": "-std=c99 -O3 -Wall -Wextra -pedantic -Werror",
+      "gcc_warnings": 0,
+      "gcc_seconds": 0.04,
+      "max_abs_difference": 0.0,
+      "bit_identical": true,
+      "allocates": false,
+      "includes": [
+        "stdio.h"
+      ]
+    },
+    {
+      "checkpoint": "artifacts/checkpoints/t30.pt",
+      "p": 59,
+      "motif": null,
+      "n_nodes": 5763,
+      "n_inputs": 3481,
+      "python_bytes": 2207941,
+      "c_bytes": 2083548,
+      "c_lines": 869,
+      "gcc_flags": "-std=c99 -O3 -Wall -Wextra -pedantic -Werror",
+      "gcc_warnings": 0,
+      "gcc_seconds": 2.5,
+      "max_abs_difference": 0.0,
+      "bit_identical": true,
+      "allocates": false,
+      "includes": [
+        "math.h",
+        "stdio.h"
+      ]
+    }
+  ]
+}

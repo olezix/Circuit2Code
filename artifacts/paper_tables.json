@@ -1,18 +1,18 @@
 {
   "generated_by": "scripts/paper_tables.py",
   "rows": {
-    "p59_memoriser": {
-      "checkpoint": "artifacts/checkpoints/add59.pt",
+    "p59_grok": {
+      "checkpoint": "artifacts/checkpoints/g70.pt",
       "p": 59,
       "d_model": 128,
       "n_heads": 4,
       "mlp_width": 0,
       "n_params": 80768,
-      "train_fraction": 0.3,
+      "train_fraction": 0.7,
       "accuracy": {
-        "train_accuracy": 0.9865900278091431,
-        "full_domain_accuracy": 0.5024418234825134,
-        "test_accuracy": 0.29503488540649414
+        "train_accuracy": 1.0,
+        "full_domain_accuracy": 1.0,
+        "test_accuracy": 1.0
       },
       "circuit": {
         "heads": [
@@ -22,107 +22,270 @@
           "L0H3"
         ],
         "shift_residual": {
-          "L0H0": 35.977459948699355,
-          "L0H1": 38.373519412541796,
-          "L0H2": 37.41051145781905,
-          "L0H3": 29.872561417393765
+          "L0H0": 67.53892040454735,
+          "L0H1": 74.4773983864461,
+          "L0H2": 64.80400227692168,
+          "L0H3": 39.811210404639525
         },
         "spectral_energy_top3": {
-          "L0H0": 0.4318910278379917,
-          "L0H1": 0.3026455193758011,
-          "L0H2": 0.3919742777943611,
-          "L0H3": 0.2671566903591156
+          "L0H0": 0.9949586652219296,
+          "L0H1": 0.9944824744015932,
+          "L0H2": 0.9823862947523594,
+          "L0H3": 0.9785676170140505
         },
         "frequencies": [
-          11,
           15,
-          26
+          22,
+          28
         ],
-        "is_periodic": false,
+        "is_periodic": true,
         "head_reports": [
           {
             "layer": 0,
             "head": 0,
-            "accuracy_drop": 0.387532,
-            "logit_diff_drop": 3.146584,
+            "accuracy_drop": 0.872163,
+            "logit_diff_drop": 39.801216,
             "top_frequencies": [
               [
-                11,
-                0.295392
+                22,
+                0.94625
               ],
               [
                 15,
-                0.096386
+                0.031147
               ],
               [
-                29,
-                0.040113
+                28,
+                0.017562
               ]
             ],
-            "spectral_energy_top3": 0.431891
+            "spectral_energy_top3": 0.994959
           },
           {
             "layer": 0,
             "head": 1,
-            "accuracy_drop": 0.37403,
-            "logit_diff_drop": 2.662112,
+            "accuracy_drop": 0.88825,
+            "logit_diff_drop": 33.495186,
             "top_frequencies": [
               [
+                22,
+                0.934314
+              ],
+              [
                 15,
-                0.143846
+                0.033011
               ],
               [
-                11,
-                0.09444
-              ],
-              [
-                23,
-                0.06436
+                28,
+                0.027157
               ]
             ],
-            "spectral_energy_top3": 0.302646
+            "spectral_energy_top3": 0.994482
           },
           {
             "layer": 0,
             "head": 2,
-            "accuracy_drop": 0.392129,
-            "logit_diff_drop": 3.082327,
+            "accuracy_drop": 0.833668,
+            "logit_diff_drop": 17.032074,
             "top_frequencies": [
               [
-                11,
-                0.188798
+                22,
+                0.654485
               ],
               [
-                26,
-                0.135205
+                28,
+                0.274393
               ],
               [
                 15,
-                0.067971
+                0.053509
               ]
             ],
-            "spectral_energy_top3": 0.391974
+            "spectral_energy_top3": 0.982386
           },
           {
             "layer": 0,
             "head": 3,
-            "accuracy_drop": 0.379489,
-            "logit_diff_drop": 2.488416,
+            "accuracy_drop": 0.757254,
+            "logit_diff_drop": 16.998993,
+            "top_frequencies": [
+              [
+                28,
+                0.813977
+              ],
+              [
+                22,
+                0.139599
+              ],
+              [
+                3,
+                0.024992
+              ]
+            ],
+            "spectral_energy_top3": 0.978568
+          }
+        ]
+      },
+      "synthesis": {
+        "motif": "add_mod",
+        "is_faithful_fallback": false,
+        "full_domain_accuracy": 1.0,
+        "n_nodes": 4,
+        "truncation_error": null,
+        "frequencies_per_head": {},
+        "full_basis": null,
+        "n_readout_parameters": null,
+        "seconds": 0.21,
+        "body": "((a + b) % 59)"
+      },
+      "verification": {
+        "verified": true,
+        "deployment_gap": 6.246739114601496e-05,
+        "total_time_s": 1.42,
+        "results": [
+          {
+            "name": "spec",
+            "status": "proved",
+            "detail": "Z3 proved \u00ac(\u2203 counterexample) in 0.018s ({'num checks': 1.0, 'num allocs': 608805.0, 'rlimit count': 104696.0, 'max memory': 19.86, 'memory': 18.86, 'time': 0.017})",
+            "solver_time_s": 0.0179,
+            "statistics": {}
+          },
+          {
+            "name": "model_equivalence",
+            "status": "proved",
+            "detail": "all 3481 inputs certified (enclosure-decided: 3481, SMT-decided: 0); Z3 discharged 0 queries in 0.000s",
+            "solver_time_s": 0.0,
+            "statistics": {
+              "inputs": 3481.0,
+              "inputs_enclosure_certified": 3481.0,
+              "inputs_smt": 0.0
+            }
+          }
+        ]
+      }
+    },
+    "p59_partial": {
+      "checkpoint": "artifacts/checkpoints/t30.pt",
+      "p": 59,
+      "d_model": 128,
+      "n_heads": 4,
+      "mlp_width": 0,
+      "n_params": 80768,
+      "train_fraction": 0.3,
+      "accuracy": {
+        "train_accuracy": 1.0,
+        "full_domain_accuracy": 0.8417121767997742,
+        "test_accuracy": 0.7739023566246033
+      },
+      "circuit": {
+        "heads": [
+          "L0H0",
+          "L0H1",
+          "L0H2",
+          "L0H3"
+        ],
+        "shift_residual": {
+          "L0H0": 60.684892005839586,
+          "L0H1": 56.071794800839186,
+          "L0H2": 97.24289566632045,
+          "L0H3": 107.83562406089347
+        },
+        "spectral_energy_top3": {
+          "L0H0": 0.9276200048625469,
+          "L0H1": 0.9582947809249163,
+          "L0H2": 0.9549972414970398,
+          "L0H3": 0.9509657807648182
+        },
+        "frequencies": [
+          6,
+          11,
+          29
+        ],
+        "is_periodic": true,
+        "head_reports": [
+          {
+            "layer": 0,
+            "head": 0,
+            "accuracy_drop": 0.598104,
+            "logit_diff_drop": 4.208675,
+            "top_frequencies": [
+              [
+                6,
+                0.84517
+              ],
+              [
+                29,
+                0.049239
+              ],
+              [
+                11,
+                0.03321
+              ]
+            ],
+            "spectral_energy_top3": 0.92762
+          },
+          {
+            "layer": 0,
+            "head": 1,
+            "accuracy_drop": 0.649239,
+            "logit_diff_drop": 28.856491,
+            "top_frequencies": [
+              [
+                29,
+                0.936045
+              ],
+              [
+                11,
+                0.012447
+              ],
+              [
+                6,
+                0.009803
+              ]
+            ],
+            "spectral_energy_top3": 0.958295
+          },
+          {
+            "layer": 0,
+            "head": 2,
+            "accuracy_drop": 0.696352,
+            "logit_diff_drop": 5.999985,
             "top_frequencies": [
               [
                 11,
-                0.132985
+                0.896994
               ],
               [
-                17,
-                0.071633
+                29,
+                0.029408
               ],
               [
-                23,
-                0.062539
+                22,
+                0.028595
               ]
             ],
-            "spectral_energy_top3": 0.267157
+            "spectral_energy_top3": 0.954997
+          },
+          {
+            "layer": 0,
+            "head": 3,
+            "accuracy_drop": 0.698363,
+            "logit_diff_drop": 25.260429,
+            "top_frequencies": [
+              [
+                11,
+                0.887395
+              ],
+              [
+                29,
+                0.034555
+              ],
+              [
+                6,
+                0.029016
+              ]
+            ],
+            "spectral_energy_top3": 0.950966
           }
         ]
       },
@@ -132,8 +295,8 @@
         "full_domain_accuracy": 1.0,
         "n_nodes": 5763,
         "truncation_error": {
-          "score": 1.4566126083082054e-13,
-          "logit": 2.0961010704922955e-13
+          "score": 1.1535217225855376e-13,
+          "logit": 1.1795009413617663e-12
         },
         "frequencies_per_head": {
           "0": 29,
@@ -143,13 +306,13 @@
         },
         "full_basis": true,
         "n_readout_parameters": 13924,
-        "seconds": 15.7,
-        "body": "argmax([-1.8440206866265418 + softmax(...)[0] * G0_a(1.0, cos(0.10649466622338281 * a), sin(0.10649466622338281 * a), cos(0.21298933244676563 * a), sin(0.21298933244676563 * a), cos(0.31948399867014843 * a), sin(0.31948399867014843 * a), cos(0.42597866489353126 * a), sin(0.42597866489353126 * a), cos(0.5324733311169141 * a), sin(0.5324733311169141 * a), cos(0.6389679973402969 * a), sin(0.638967997"
+        "seconds": 6.73,
+        "body": "argmax([-3.4286063718207522 + softmax(...)[0] * G0_a(1.0, cos(0.10649466622338281 * a), sin(0.10649466622338281 * a), cos(0.21298933244676563 * a), sin(0.21298933244676563 * a), cos(0.31948399867014843 * a), sin(0.31948399867014843 * a), cos(0.42597866489353126 * a), sin(0.42597866489353126 * a), cos(0.5324733311169141 * a), sin(0.5324733311169141 * a), cos(0.6389679973402969 * a), sin(0.638967997"
       },
       "verification": {
         "verified": true,
-        "deployment_gap": 3.7645989694912174e-05,
-        "total_time_s": 98.56,
+        "deployment_gap": 0.00014617984790277205,
+        "total_time_s": 41.21,
         "results": [
           {
             "name": "spec",
@@ -179,18 +342,18 @@
         ]
       }
     },
-    "p59_grok": {
-      "checkpoint": "artifacts/checkpoints/g70.pt",
+    "p59_memoriser": {
+      "checkpoint": "artifacts/checkpoints/m30.pt",
       "p": 59,
       "d_model": 128,
       "n_heads": 4,
       "mlp_width": 0,
       "n_params": 80768,
-      "train_fraction": 0.7,
+      "train_fraction": 0.3,
       "accuracy": {
         "train_accuracy": 1.0,
-        "full_domain_accuracy": 1.0,
-        "test_accuracy": 1.0
+        "full_domain_accuracy": 0.5119218826293945,
+        "test_accuracy": 0.30283135175704956
       },
       "circuit": {
         "heads": [
@@ -200,132 +363,140 @@
           "L0H3"
         ],
         "shift_residual": {
-          "L0H0": 98.13514453071659,
-          "L0H1": 128.92742312156548,
-          "L0H2": 98.65436177334543,
-          "L0H3": 100.2658466565407
+          "L0H0": 32.17378067970276,
+          "L0H1": 29.35126098965184,
+          "L0H2": 38.434537055128715,
+          "L0H3": 36.82680443800607
         },
         "spectral_energy_top3": {
-          "L0H0": 0.9977254378609359,
-          "L0H1": 0.9980473188916221,
-          "L0H2": 0.9722988158464432,
-          "L0H3": 0.9741446673870087
+          "L0H0": 0.32426808029413223,
+          "L0H1": 0.28742455691099167,
+          "L0H2": 0.2414405718445778,
+          "L0H3": 0.37293293327093124
         },
         "frequencies": [
-          15,
-          22,
-          28
+          2,
+          16,
+          20
         ],
-        "is_periodic": true,
+        "is_periodic": false,
         "head_reports": [
           {
             "layer": 0,
             "head": 0,
-            "accuracy_drop": 0.826199,
-            "logit_diff_drop": 58.737419,
+            "accuracy_drop": 0.379776,
+            "logit_diff_drop": 3.155609,
             "top_frequencies": [
               [
-                22,
-                0.966272
+                16,
+                0.186053
               ],
               [
-                15,
-                0.028965
+                25,
+                0.070129
               ],
               [
-                7,
-                0.002489
+                6,
+                0.068086
               ]
             ],
-            "spectral_energy_top3": 0.997725
+            "spectral_energy_top3": 0.324268
           },
           {
             "layer": 0,
             "head": 1,
-            "accuracy_drop": 0.836541,
-            "logit_diff_drop": 56.209984,
+            "accuracy_drop": 0.379201,
+            "logit_diff_drop": 3.16935,
             "top_frequencies": [
               [
-                22,
-                0.972842
+                16,
+                0.119444
               ],
               [
-                15,
-                0.023265
+                20,
+                0.09532
               ],
               [
-                7,
-                0.001941
+                2,
+                0.07266
               ]
             ],
-            "spectral_energy_top3": 0.998047
+            "spectral_energy_top3": 0.287425
           },
           {
             "layer": 0,
             "head": 2,
-            "accuracy_drop": 0.840276,
-            "logit_diff_drop": 21.60495,
+            "accuracy_drop": 0.374318,
+            "logit_diff_drop": 2.661075,
             "top_frequencies": [
               [
-                22,
-                0.636518
+                20,
+                0.090436
               ],
               [
-                28,
-                0.274325
+                11,
+                0.085611
               ],
               [
-                15,
-                0.061456
+                6,
+                0.065393
               ]
             ],
-            "spectral_energy_top3": 0.972299
+            "spectral_energy_top3": 0.241441
           },
           {
             "layer": 0,
             "head": 3,
-            "accuracy_drop": 0.836254,
-            "logit_diff_drop": 22.720901,
+            "accuracy_drop": 0.37518,
+            "logit_diff_drop": 2.564932,
             "top_frequencies": [
               [
-                22,
-                0.633379
+                16,
+                0.165025
               ],
               [
-                28,
-                0.276801
+                2,
+                0.107857
               ],
               [
-                15,
-                0.063964
+                4,
+                0.100051
               ]
             ],
-            "spectral_energy_top3": 0.974145
+            "spectral_energy_top3": 0.372933
           }
         ]
       },
       "synthesis": {
-        "motif": "add_mod",
-        "is_faithful_fallback": false,
+        "motif": null,
+        "is_faithful_fallback": true,
         "full_domain_accuracy": 1.0,
-        "n_nodes": 4,
-        "truncation_error": null,
-        "frequencies_per_head": {},
-        "full_basis": null,
-        "n_readout_parameters": null,
-        "seconds": 0.37,
-        "body": "((a + b) % 59)"
+        "n_nodes": 5763,
+        "truncation_error": {
+          "score": 1.1368683772161603e-13,
+          "logit": 2.2737367544323206e-13
+        },
+        "frequencies_per_head": {
+          "0": 29,
+          "1": 29,
+          "2": 29,
+          "3": 29
+        },
+        "full_basis": true,
+        "n_readout_parameters": 13924,
+        "seconds": 6.77,
+        "body": "argmax([-0.4849370450975371 + softmax(...)[0] * G0_a(1.0, cos(0.10649466622338281 * a), sin(0.10649466622338281 * a), cos(0.21298933244676563 * a), sin(0.21298933244676563 * a), cos(0.31948399867014843 * a), sin(0.31948399867014843 * a), cos(0.42597866489353126 * a), sin(0.42597866489353126 * a), cos(0.5324733311169141 * a), sin(0.5324733311169141 * a), cos(0.6389679973402969 * a), sin(0.638967997"
       },
       "verification": {
         "verified": true,
-        "deployment_gap": 0.00011829820155639936,
-        "total_time_s": 1.49,
+        "deployment_gap": 5.7761344226747724e-05,
+        "total_time_s": 41.2,
         "results": [
           {
             "name": "spec",
-            "status": "proved",
-            "detail": "Z3 proved \u00ac(\u2203 counterexample) in 0.022s ({'num checks': 1.0, 'num allocs': 615937.0, 'rlimit count': 104696.0, 'max memory': 19.86, 'memory': 18.86, 'time': 0.021})",
-            "solver_time_s": 0.0218,
+            "status": "skipped",
+            "detail": "the program is not expressible in integer arithmetic: node ArgMax has no exact SMT translation",
+            "solver_time_s": 0.0,
             "statistics": {}
           },
           {
@@ -338,182 +509,11 @@
               "inputs_enclosure_certified": 3481.0,
               "inputs_smt": 0.0
             }
-          }
-        ]
-      }
-    },
-    "p23_cosine": {
-      "checkpoint": "artifacts/checkpoints/cos2.pt",
-      "p": 23,
-      "d_model": 64,
-      "n_heads": 4,
-      "mlp_width": 0,
-      "n_params": 19392,
-      "train_fraction": 0.5,
-      "accuracy": {
-        "train_accuracy": 1.0,
-        "full_domain_accuracy": 0.8620038032531738,
-        "test_accuracy": 0.7245283126831055
-      },
-      "circuit": {
-        "heads": [
-          "L0H0",
-          "L0H1",
-          "L0H2",
-          "L0H3"
-        ],
-        "shift_residual": {
-          "L0H0": 96.36171884122102,
-          "L0H1": 137.71839526425236,
-          "L0H2": 123.0431843633237,
-          "L0H3": 197.19960561005965
-        },
-        "spectral_energy_top3": {
-          "L0H0": 0.8964242599904537,
-          "L0H1": 0.9605602845549583,
-          "L0H2": 0.9624781711027026,
-          "L0H3": 0.926800886169076
-        },
-        "frequencies": [
-          6,
-          8,
-          11
-        ],
-        "is_periodic": false,
-        "head_reports": [
-          {
-            "layer": 0,
-            "head": 0,
-            "accuracy_drop": 0.591682,
-            "logit_diff_drop": 10.233002,
-            "top_frequencies": [
-              [
-                11,
-                0.564135
-              ],
-              [
-                6,
-                0.304451
-              ],
-              [
-                1,
-                0.027838
-              ]
-            ],
-            "spectral_energy_top3": 0.896424
-          },
-          {
-            "layer": 0,
-            "head": 1,
-            "accuracy_drop": 0.672968,
-            "logit_diff_drop": 20.758228,
-            "top_frequencies": [
-              [
-                8,
-                0.719862
-              ],
-              [
-                11,
-                0.154573
-              ],
-              [
-                6,
-                0.086125
-              ]
-            ],
-            "spectral_energy_top3": 0.96056
-          },
-          {
-            "layer": 0,
-            "head": 2,
-            "accuracy_drop": 0.661626,
-            "logit_diff_drop": 16.239727,
-            "top_frequencies": [
-              [
-                8,
-                0.835295
-              ],
-              [
-                11,
-                0.114661
-              ],
-              [
-                1,
-                0.012521
-              ]
-            ],
-            "spectral_energy_top3": 0.962478
-          },
-          {
-            "layer": 0,
-            "head": 3,
-            "accuracy_drop": 0.671078,
-            "logit_diff_drop": 20.643044,
-            "top_frequencies": [
-              [
-                11,
-                0.88295
-              ],
-              [
-                6,
-                0.024502
-              ],
-              [
-                1,
-                0.01935
-              ]
-            ],
-            "spectral_energy_top3": 0.926801
-          }
-        ]
-      },
-      "synthesis": {
-        "motif": null,
-        "is_faithful_fallback": true,
-        "full_domain_accuracy": 1.0,
-        "n_nodes": 2235,
-        "truncation_error": {
-          "score": 2.930988785010413e-14,
-          "logit": 4.831690603168681e-13
-        },
-        "frequencies_per_head": {
-          "0": 11,
-          "1": 11,
-          "2": 11,
-          "3": 11
-        },
-        "full_basis": true,
-        "n_readout_parameters": 2116,
-        "seconds": 0.39,
-        "body": "argmax([-2.0521519588985404 + softmax(...)[0] * G0_a(1.0, cos(0.2731819698773733 * a), sin(0.2731819698773733 * a), cos(0.5463639397547466 * a), sin(0.5463639397547466 * a), cos(0.8195459096321199 * a), sin(0.8195459096321199 * a), cos(1.0927278795094932 * a), sin(1.0927278795094932 * a), cos(1.3659098493868667 * a), sin(1.3659098493868667 * a), cos(1.6390918192642399 * a), sin(1.6390918192642399 "
-      },
-      "verification": {
-        "verified": true,
-        "deployment_gap": 0.00020885811289872436,
-        "total_time_s": 2.03,
-        "results": [
-          {
-            "name": "spec",
-            "status": "skipped",
-            "detail": "the program is not expressible in integer arithmetic: node ArgMax has no exact SMT translation",
-            "solver_time_s": 0.0,
-            "statistics": {}
-          },
-          {
-            "name": "model_equivalence",
-            "status": "proved",
-            "detail": "all 529 inputs certified (enclosure-decided: 529, SMT-decided: 0); Z3 discharged 0 queries in 0.000s",
-            "solver_time_s": 0.0,
-            "statistics": {
-              "inputs": 529.0,
-              "inputs_enclosure_certified": 529.0,
-              "inputs_smt": 0.0
-            }
           },
           {
             "name": "logit_equivalence",
             "status": "proved",
-            "detail": "exact rational comparison of 12167 certified logit bounds; no SMT query required",
+            "detail": "exact rational comparison of 205379 certified logit bounds; no SMT query required",
             "solver_time_s": 0.0,
             "statistics": {}
           }
@@ -530,8 +530,8 @@
       "train_fraction": 0.5,
       "accuracy": {
         "train_accuracy": 1.0,
-        "full_domain_accuracy": 0.88165682554245,
-        "test_accuracy": 0.7647058963775635
+        "full_domain_accuracy": 0.8639053106307983,
+        "test_accuracy": 0.729411780834198
       },
       "circuit": {
         "heads": [
@@ -541,107 +541,107 @@
           "L0H3"
         ],
         "shift_residual": {
-          "L0H0": 100.14663065396823,
-          "L0H1": 174.38522214155932,
-          "L0H2": 71.30347240888156,
-          "L0H3": 75.5358519920936
+          "L0H0": 17.87804002028245,
+          "L0H1": 30.768858863757206,
+          "L0H2": 19.79402996943547,
+          "L0H3": 28.29500695833793
         },
         "spectral_energy_top3": {
-          "L0H0": 0.9915640503168106,
-          "L0H1": 0.9889748804271221,
-          "L0H2": 0.9878794085234404,
-          "L0H3": 0.987256208434701
+          "L0H0": 0.9901214633136988,
+          "L0H1": 0.9155087918043137,
+          "L0H2": 0.9392102770507336,
+          "L0H3": 0.9667438864707947
         },
         "frequencies": [
-          1,
-          3,
-          4
+          4,
+          5,
+          6
         ],
         "is_periodic": true,
         "head_reports": [
           {
             "layer": 0,
             "head": 0,
-            "accuracy_drop": 0.633136,
-            "logit_diff_drop": -0.045697,
+            "accuracy_drop": 0.52071,
+            "logit_diff_drop": 9.889648,
             "top_frequencies": [
               [
-                1,
-                0.951031
-              ],
-              [
-                3,
-                0.026706
+                6,
+                0.954159
               ],
               [
                 4,
-                0.013827
+                0.018078
+              ],
+              [
+                1,
+                0.017885
               ]
             ],
-            "spectral_energy_top3": 0.991564
+            "spectral_energy_top3": 0.990121
           },
           {
             "layer": 0,
             "head": 1,
-            "accuracy_drop": 0.621302,
-            "logit_diff_drop": 1.445681,
+            "accuracy_drop": 0.366864,
+            "logit_diff_drop": 6.113918,
             "top_frequencies": [
               [
-                1,
-                0.947596
+                4,
+                0.806673
+              ],
+              [
+                5,
+                0.060476
               ],
               [
                 3,
-                0.029494
-              ],
-              [
-                2,
-                0.011885
+                0.04836
               ]
             ],
-            "spectral_energy_top3": 0.988975
+            "spectral_energy_top3": 0.915509
           },
           {
             "layer": 0,
             "head": 2,
-            "accuracy_drop": 0.550296,
-            "logit_diff_drop": 6.710841,
+            "accuracy_drop": 0.426035,
+            "logit_diff_drop": 4.786819,
             "top_frequencies": [
               [
                 4,
-                0.790356
+                0.834706
               ],
               [
-                1,
-                0.182431
+                6,
+                0.070546
               ],
               [
-                3,
-                0.015093
+                5,
+                0.033959
               ]
             ],
-            "spectral_energy_top3": 0.987879
+            "spectral_energy_top3": 0.93921
           },
           {
             "layer": 0,
             "head": 3,
-            "accuracy_drop": 0.609467,
-            "logit_diff_drop": 3.807553,
+            "accuracy_drop": 0.508876,
+            "logit_diff_drop": 6.855015,
             "top_frequencies": [
               [
+                6,
+                0.77126
+              ],
+              [
                 4,
-                0.681026
+                0.165092
               ],
               [
                 1,
-                0.279605
-              ],
-              [
-                3,
-                0.026625
+                0.030391
               ]
             ],
-            "spectral_energy_top3": 0.987256
+            "spectral_energy_top3": 0.966744
           }
         ]
       },
@@ -651,8 +651,8 @@
         "full_domain_accuracy": 1.0,
         "n_nodes": 1255,
         "truncation_error": {
-          "score": 1.4654943925052066e-14,
-          "logit": 2.3092638912203256e-13
+          "score": 7.105427357601002e-15,
+          "logit": 4.973799150320701e-14
         },
         "frequencies_per_head": {
           "0": 6,
@@ -662,13 +662,13 @@
         },
         "full_basis": true,
         "n_readout_parameters": 676,
-        "seconds": 0.09,
-        "body": "argmax([-3.1879680385547773 + softmax(...)[0] * G0_a(1.0, cos(0.483321946706122 * a), sin(0.483321946706122 * a), cos(0.966643893412244 * a), sin(0.966643893412244 * a), cos(1.4499658401183662 * a), sin(1.4499658401183662 * a), cos(1.933287786824488 * a), sin(1.933287786824488 * a), cos(2.4166097335306103 * a), sin(2.4166097335306103 * a), cos(2.8999316802367323 * a), sin(2.8999316802367323 * a))["
+        "seconds": 0.06,
+        "body": "argmax([0.03552283085752511 + softmax(...)[0] * G0_a(1.0, cos(0.483321946706122 * a), sin(0.483321946706122 * a), cos(0.966643893412244 * a), sin(0.966643893412244 * a), cos(1.4499658401183662 * a), sin(1.4499658401183662 * a), cos(1.933287786824488 * a), sin(1.933287786824488 * a), cos(2.4166097335306103 * a), sin(2.4166097335306103 * a), cos(2.8999316802367323 * a), sin(2.8999316802367323 * a))["
       },
       "verification": {
         "verified": true,
-        "deployment_gap": 0.0001415262295836328,
-        "total_time_s": 0.4,
+        "deployment_gap": 1.1051782477622396e-05,
+        "total_time_s": 0.29,
         "results": [
           {
             "name": "spec",
@@ -698,6 +698,184 @@
         ]
       }
     },
+    "p23_cosine": {
+      "checkpoint": "artifacts/checkpoints/cos2.pt",
+      "p": 23,
+      "d_model": 64,
+      "n_heads": 4,
+      "mlp_width": 0,
+      "n_params": 19392,
+      "train_fraction": 0.5,
+      "accuracy": {
+        "train_accuracy": 1.0,
+        "full_domain_accuracy": 0.8714555501937866,
+        "test_accuracy": 0.7433962225914001
+      },
+      "circuit": {
+        "heads": [
+          "L0H0",
+          "L0H1",
+          "L0H2",
+          "L0H3"
+        ],
+        "shift_residual": {
+          "L0H0": 65.61978671602581,
+          "L0H1": 49.5352507363195,
+          "L0H2": 55.433702924977176,
+          "L0H3": 48.47676682472229
+        },
+        "spectral_energy_top3": {
+          "L0H0": 0.9744756706058979,
+          "L0H1": 0.9581126337870955,
+          "L0H2": 0.9525416679680347,
+          "L0H3": 0.9553373567759991
+        },
+        "frequencies": [
+          2,
+          3,
+          6
+        ],
+        "is_periodic": true,
+        "head_reports": [
+          {
+            "layer": 0,
+            "head": 0,
+            "accuracy_drop": 0.606805,
+            "logit_diff_drop": 2.750667,
+            "top_frequencies": [
+              [
+                2,
+                0.897694
+              ],
+              [
+                3,
+                0.053402
+              ],
+              [
+                4,
+                0.02338
+              ]
+            ],
+            "spectral_energy_top3": 0.974476
+          },
+          {
+            "layer": 0,
+            "head": 1,
+            "accuracy_drop": 0.483932,
+            "logit_diff_drop": 4.76469,
+            "top_frequencies": [
+              [
+                3,
+                0.643004
+              ],
+              [
+                2,
+                0.305048
+              ],
+              [
+                6,
+                0.010061
+              ]
+            ],
+            "spectral_energy_top3": 0.958113
+          },
+          {
+            "layer": 0,
+            "head": 2,
+            "accuracy_drop": 0.620038,
+            "logit_diff_drop": 4.801873,
+            "top_frequencies": [
+              [
+                3,
+                0.758625
+              ],
+              [
+                2,
+                0.16101
+              ],
+              [
+                6,
+                0.032907
+              ]
+            ],
+            "spectral_energy_top3": 0.952542
+          },
+          {
+            "layer": 0,
+            "head": 3,
+            "accuracy_drop": 0.563327,
+            "logit_diff_drop": 5.055333,
+            "top_frequencies": [
+              [
+                3,
+                0.793215
+              ],
+              [
+                2,
+                0.14135
+              ],
+              [
+                6,
+                0.020772
+              ]
+            ],
+            "spectral_energy_top3": 0.955337
+          }
+        ]
+      },
+      "synthesis": {
+        "motif": null,
+        "is_faithful_fallback": true,
+        "full_domain_accuracy": 1.0,
+        "n_nodes": 2235,
+        "truncation_error": {
+          "score": 1.3322676295501878e-14,
+          "logit": 2.4158453015843406e-13
+        },
+        "frequencies_per_head": {
+          "0": 11,
+          "1": 11,
+          "2": 11,
+          "3": 11
+        },
+        "full_basis": true,
+        "n_readout_parameters": 2116,
+        "seconds": 0.28,
+        "body": "argmax([1.7139981559761388 + softmax(...)[0] * G0_a(1.0, cos(0.2731819698773733 * a), sin(0.2731819698773733 * a), cos(0.5463639397547466 * a), sin(0.5463639397547466 * a), cos(0.8195459096321199 * a), sin(0.8195459096321199 * a), cos(1.0927278795094932 * a), sin(1.0927278795094932 * a), cos(1.3659098493868667 * a), sin(1.3659098493868667 * a), cos(1.6390918192642399 * a), sin(1.6390918192642399 *"
+      },
+      "verification": {
+        "verified": true,
+        "deployment_gap": 4.2506784140528e-05,
+        "total_time_s": 1.46,
+        "results": [
+          {
+            "name": "spec",
+            "status": "skipped",
+            "detail": "the program is not expressible in integer arithmetic: node ArgMax has no exact SMT translation",
+            "solver_time_s": 0.0,
+            "statistics": {}
+          },
+          {
+            "name": "model_equivalence",
+            "status": "proved",
+            "detail": "all 529 inputs certified (enclosure-decided: 529, SMT-decided: 0); Z3 discharged 0 queries in 0.000s",
+            "solver_time_s": 0.0,
+            "statistics": {
+              "inputs": 529.0,
+              "inputs_enclosure_certified": 529.0,
+              "inputs_smt": 0.0
+            }
+          },
+          {
+            "name": "logit_equivalence",
+            "status": "proved",
+            "detail": "exact rational comparison of 12167 certified logit bounds; no SMT query required",
+            "solver_time_s": 0.0,
+            "statistics": {}
+          }
+        ]
+      }
+    },
     "p113_grok": {
       "checkpoint": "artifacts/checkpoints/g113.pt",
       "p": 113,
@@ -708,8 +886,8 @@
       "train_fraction": 0.7,
       "accuracy": {
         "train_accuracy": 1.0,
-        "full_domain_accuracy": 0.9988252520561218,
-        "test_accuracy": 0.9960845708847046
+        "full_domain_accuracy": 0.9997650384902954,
+        "test_accuracy": 0.9992169141769409
       },
       "circuit": {
         "heads": [
@@ -719,107 +897,107 @@
           "L0H3"
         ],
         "shift_residual": {
-          "L0H0": 67.85290045375251,
-          "L0H1": 60.813238346603065,
-          "L0H2": 37.14581646015291,
-          "L0H3": 41.98075670294002
+          "L0H0": 177.68928532467214,
+          "L0H1": 162.05136007598017,
+          "L0H2": 87.3342792124743,
+          "L0H3": 90.32117665212898
         },
         "spectral_energy_top3": {
-          "L0H0": 0.9156061112880707,
-          "L0H1": 0.914128266274929,
-          "L0H2": 0.9868774246424437,
-          "L0H3": 0.9955122929532081
+          "L0H0": 0.8969118595123291,
+          "L0H1": 0.8920561037957668,
+          "L0H2": 0.9903055606409907,
+          "L0H3": 0.9950094469822943
         },
         "frequencies": [
           21,
           25,
           28
         ],
-        "is_periodic": true,
+        "is_periodic": false,
         "head_reports": [
           {
             "layer": 0,
             "head": 0,
-            "accuracy_drop": 0.912522,
-            "logit_diff_drop": 11.737165,
+            "accuracy_drop": 0.930613,
+            "logit_diff_drop": 24.874557,
             "top_frequencies": [
               [
                 28,
-                0.669306
+                0.723914
               ],
               [
                 25,
-                0.168023
+                0.117072
               ],
               [
                 21,
-                0.078277
+                0.055927
               ]
             ],
-            "spectral_energy_top3": 0.915606
+            "spectral_energy_top3": 0.896912
           },
           {
             "layer": 0,
             "head": 1,
-            "accuracy_drop": 0.911348,
-            "logit_diff_drop": 11.572641,
+            "accuracy_drop": 0.923173,
+            "logit_diff_drop": 24.32695,
             "top_frequencies": [
               [
                 28,
-                0.670861
+                0.726913
               ],
               [
                 25,
-                0.165414
+                0.112278
               ],
               [
                 21,
-                0.077853
+                0.052865
               ]
             ],
-            "spectral_energy_top3": 0.914128
+            "spectral_energy_top3": 0.892056
           },
           {
             "layer": 0,
             "head": 2,
-            "accuracy_drop": 0.886679,
-            "logit_diff_drop": 6.634426,
+            "accuracy_drop": 0.909547,
+            "logit_diff_drop": 11.476646,
             "top_frequencies": [
               [
                 21,
-                0.93502
+                0.919514
               ],
               [
                 50,
-                0.045826
+                0.060041
               ],
               [
                 8,
-                0.006031
+                0.010751
               ]
             ],
-            "spectral_energy_top3": 0.986877
+            "spectral_energy_top3": 0.990306
           },
           {
             "layer": 0,
             "head": 3,
-            "accuracy_drop": 0.928107,
-            "logit_diff_drop": 11.453381,
+            "accuracy_drop": 0.929595,
+            "logit_diff_drop": 20.136921,
             "top_frequencies": [
               [
                 25,
-                0.965703
+                0.943702
               ],
               [
                 38,
-                0.027209
+                0.044589
               ],
               [
                 12,
-                0.002599
+                0.006719
               ]
             ],
-            "spectral_energy_top3": 0.995512
+            "spectral_energy_top3": 0.995009
           }
         ]
       },
@@ -829,8 +1007,8 @@
         "full_domain_accuracy": 1.0,
         "n_nodes": 11055,
         "truncation_error": {
-          "score": 9.889311591848582e-14,
-          "logit": 7.460698725481052e-13
+          "score": 6.664113705312502e-14,
+          "logit": 1.8900436771218665e-12
         },
         "frequencies_per_head": {
           "0": 56,
@@ -840,13 +1018,13 @@
         },
         "full_basis": true,
         "n_readout_parameters": 51076,
-        "seconds": 105.49,
-        "body": "argmax([0.0881368088708789 + softmax(...)[0] * G0_a(1.0, cos(0.05560340979804944 * a), sin(0.05560340979804944 * a), cos(0.11120681959609888 * a), sin(0.11120681959609888 * a), cos(0.1668102293941483 * a), sin(0.1668102293941483 * a), cos(0.22241363919219775 * a), sin(0.22241363919219775 * a), cos(0.27801704899024715 * a), sin(0.27801704899024715 * a), cos(0.3336204587882966 * a), sin(0.3336204587"
+        "seconds": 85.62,
+        "body": "argmax([-0.014041252448381634 + softmax(...)[0] * G0_a(1.0, cos(0.05560340979804944 * a), sin(0.05560340979804944 * a), cos(0.11120681959609888 * a), sin(0.11120681959609888 * a), cos(0.1668102293941483 * a), sin(0.1668102293941483 * a), cos(0.22241363919219775 * a), sin(0.22241363919219775 * a), cos(0.27801704899024715 * a), sin(0.27801704899024715 * a), cos(0.3336204587882966 * a), sin(0.3336204"
       },
       "verification": {
         "verified": true,
-        "deployment_gap": 7.538885764901693e-05,
-        "total_time_s": 663.0,
+        "deployment_gap": 0.00018309937067328974,
+        "total_time_s": 500.84,
         "results": [
           {
             "name": "spec",
@@ -882,7 +1060,7 @@
       "checkpoint": "artifacts/checkpoints/cos13_60k.pt",
       "slack": 0.001,
       "verified": true,
-      "seconds": 1.1,
+      "seconds": 0.35,
       "results": [
         {
           "name": "spec",
@@ -892,7 +1070,7 @@
         {
           "name": "model_equivalence",
           "status": "proved",
-          "detail": "all 169 inputs certified (enclosure-decided: 140, SMT-decided: 29); Z3 discharged 2 queries in 0.073s"
+          "detail": "all 169 inputs certified (enclosure-decided: 163, SMT-decided: 6); Z3 discharged 2 queries in 0.009s"
         },
         {
           "name": "logit_equivalence",
@@ -905,7 +1083,7 @@
       "checkpoint": "artifacts/checkpoints/cos13_60k.pt",
       "slack": 0.01,
       "verified": false,
-      "seconds": 4.41,
+      "seconds": 1.12,
       "results": [
         {
           "name": "spec",

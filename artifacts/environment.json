@@ -1,0 +1,18 @@
+{
+  "generated_at_utc": "2026-11-01T08:42:34Z",
+  "python": "3.11.2",
+  "implementation": "CPython",
+  "platform": "Linux-6.1.158+-x86_64-with-glibc2.36",
+  "machine": "x86_64",
+  "cpu_model": "x86_64",
+  "cpu_count": 2,
+  "torch": "2.15.0+cu132",
+  "torch_cuda": false,
+  "numpy": "2.4.6",
+  "scipy": "1.17.1",
+  "sympy": "1.14.0",
+  "z3": "5.3.3",
+  "rich": "unknown",
+  "gcc": "gcc (Debian 12.2.0-14+deb12u1) 12.2.0",
+  "notes": "All reported runs used CPU-only training with torch.set_num_threads(1) and full-batch gradients; no GPU was involved."
+}

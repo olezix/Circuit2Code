@@ -84,7 +84,7 @@ def main(argv=None) -> int:
         help="checkpoint files, optionally suffixed with ':train_fraction'",
     )
     parser.add_argument("--train-fraction", type=float, default=0.3)
-    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--seed", type=int, default=3, help="data-split seed (3 = the training split)")
     parser.add_argument("--out", default=None, help="write the table as JSON here")
     args = parser.parse_args(argv)
 
