@@ -36,6 +36,11 @@ from src.verification import Verifier, VerifyConfig  # noqa: E402
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CKPT = os.path.join(ROOT, "artifacts", "checkpoints")
 
+#: The seed every reported checkpoint was trained with (``make train SEED=3``).
+#: Reusing it for the data split makes the reported "held-out" accuracy the
+#: accuracy on the inputs the optimiser never saw.
+SPLIT_SEED = 3
+
 
 def _accuracy(model: Transformer, dataset) -> dict:
     with torch.no_grad():
@@ -180,15 +185,18 @@ def main(argv=None) -> int:
     args = parser.parse_args(argv)
 
     payload: dict = {"generated_by": "scripts/paper_tables.py", "rows": {}, "extra": {}}
-    #: key -> (checkpoint, train fraction, data-split seed).  The p=113 run uses
-    #: its own training split (seed 3) so that "held-out" means the 30% the
-    #: optimiser never saw.
+    #: key -> (checkpoint, train fraction, data-split seed).  Every reported
+    #: checkpoint was trained with ``--seed 3``, so the same seed is used here:
+    #: "held-out" then means the fraction of the domain the optimiser never saw,
+    #: not a different random subset.  ``args.seed`` only drives the random
+    #: (untrained) network row, where there is no training split to match.
     specs = {
-        "p59_memoriser": ("add59.pt", 0.3, args.seed),
-        "p59_grok": ("g70.pt", 0.7, args.seed),
-        "p23_cosine": ("cos2.pt", 0.5, args.seed),
-        "p13_cosine": ("cos13_60k.pt", 0.5, args.seed),
-        "p113_grok": ("g113.pt", 0.7, 3),
+        "p59_grok": ("g70.pt", 0.7, SPLIT_SEED),
+        "p59_partial": ("t30.pt", 0.3, SPLIT_SEED),
+        "p59_memoriser": ("m30.pt", 0.3, SPLIT_SEED),
+        "p13_cosine": ("cos13_60k.pt", 0.5, SPLIT_SEED),
+        "p23_cosine": ("cos2.pt", 0.5, SPLIT_SEED),
+        "p113_grok": ("g113.pt", 0.7, SPLIT_SEED),
     }
     for key, (name, fraction, split_seed) in specs.items():
         if args.only and key not in args.only:
@@ -202,7 +210,8 @@ def main(argv=None) -> int:
 
     # Robustness (attention slack) is exercised on a small domain: with slack the
     # enclosure-based pruning no longer applies and every input enters the solver.
-    for key, (name, fraction) in () if args.only else (("p13", ("cos13_60k.pt", 0.5)),):
+    want_robustness = not args.only or "p13_cosine" in args.only
+    for key, (name, fraction) in (("p13", ("cos13_60k.pt", 0.5)),) if want_robustness else ():
         path = os.path.join(CKPT, name)
         if os.path.exists(path):
             for slack in (0.001, 0.01):

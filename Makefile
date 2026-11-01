@@ -4,6 +4,7 @@
 #   make test        full test suite (trains a couple of tiny models)
 #   make test-fast   skips the models that need training
 #   make all         train -> extract -> decompile -> verify -> export
+#   make results     regenerate every JSON artefact behind the paper's tables
 #   make paper       build paper/main.pdf (requires a TeX distribution)
 #   make clean       remove generated artefacts
 
@@ -19,8 +20,8 @@ EPOCHS   ?= 30000
 LR       ?= 1e-2
 SCHEDULE ?= cosine
 WD       ?= 1.0
-#: 0.7 reproduces the grokked reference checkpoint; 0.3 gives the grokking-onset
-#: run that stalls at 87% held-out accuracy.
+#: 0.7 reproduces the grokked reference checkpoint; 0.3 gives the delayed-
+#: generalisation run that stalls around 77% held-out accuracy.
 FRACTION ?= 0.7
 SEED     ?= 3
 D_MODEL  ?= 128
@@ -33,7 +34,8 @@ CHECKPOINT ?= artifacts/checkpoints/g$(P).pt
 OUT        ?= artifacts
 SLACK      ?= 0.0
 
-.PHONY: help install test test-fast lint train extract decompile verify export demo all paper clean
+.PHONY: help install test test-fast lint train extract decompile verify export demo all \
+        results environment paper clean
 
 help:
 	@echo "Circuit2Code targets"
@@ -48,6 +50,8 @@ help:
 	@echo "  export     alias for decompile into $(OUT)/exported"
 	@echo "  demo       tiny end-to-end run: train+extract+decompile+verify+export (~10 s)"
 	@echo "  all        train + extract + decompile + verify + export"
+	@echo "  results    regenerate artifacts/*.json (paper tables, sweeps, environment)"
+	@echo "  environment record the software/hardware environment to artifacts/environment.json"
 	@echo "  paper      build paper/main.pdf"
 	@echo "  clean      remove __pycache__, artefacts and build outputs"
 
@@ -94,6 +98,25 @@ export:
 
 demo:
 	$(C2C) demo --checkpoint $(OUT)/checkpoints/demo.pt --out $(OUT)/demo
+
+environment:
+	$(PYTHON) scripts/environment.py --out $(OUT)/environment.json
+
+#: Everything the README and the paper quote, regenerated from the checkpoints.
+#: Requires artifacts/checkpoints/{g70,t30,m30,g113}.pt and .../cos13_60k.pt,
+#: .../cos2.pt (``make train`` builds the first three; see README section 9).
+results: environment
+	$(PYTHON) scripts/paper_tables.py --out $(OUT)/paper_tables.json
+	$(PYTHON) scripts/frequency_budget.py artifacts/checkpoints/g70.pt:0.7 \
+		artifacts/checkpoints/t30.pt:0.3 artifacts/checkpoints/m30.pt:0.3 \
+		artifacts/checkpoints/cos13_60k.pt:0.5 artifacts/checkpoints/cos2.pt:0.5 \
+		artifacts/checkpoints/g113.pt:0.7 --out $(OUT)/frequency_budget.json
+	$(PYTHON) scripts/truncation_sweep.py artifacts/checkpoints/g70.pt \
+		--train-fraction 0.7 --budget 12 --out $(OUT)/truncation_sweep_p59.json
+	$(PYTHON) scripts/truncation_sweep.py artifacts/checkpoints/g113.pt \
+		--train-fraction 0.7 --budget 8 --out $(OUT)/truncation_sweep_p113.json
+	$(PYTHON) scripts/measure_export.py --out $(OUT)/export_measurements.json
+	$(PYTHON) scripts/render_report.py
 
 all: train extract decompile verify export
 	@echo "pipeline complete -- see $(OUT)/*.json"

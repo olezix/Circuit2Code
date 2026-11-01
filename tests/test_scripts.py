@@ -79,3 +79,18 @@ def test_paper_tables_analyse_random_network(checkpoint):
     residual_heads = set(row["circuit"]["shift_residual"])
     assert residual_heads and residual_heads <= {"L0H0", "L0H1"}
     assert residual_heads == set(row["circuit"]["spectral_energy_top3"])
+
+
+def test_environment_record_is_complete(tmp_path):
+    """The environment is part of the experimental record (README section 9.1)."""
+    from scripts import environment
+
+    record = environment.collect()
+    for key in ("python", "platform", "torch", "numpy", "z3", "cpu_count", "notes"):
+        assert key in record and record[key], key
+    assert record["z3"] != "missing"
+    out = tmp_path / "environment.json"
+    assert environment.main(["--out", str(out)]) == 0
+    written = json.loads(out.read_text())
+    assert written["python"] == record["python"]
+    assert written["notes"].startswith("All reported runs used CPU-only")

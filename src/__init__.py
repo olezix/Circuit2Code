@@ -25,7 +25,7 @@ of explicitly seeded generators.
 
 from __future__ import annotations
 
-__version__ = "0.1.0"
+__version__ = "1.0.0"
 
 DEFAULT_SEED = 42
 #: The canonical toy domain used throughout the paper and the test-suite.

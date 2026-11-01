@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+title: "Circuit2Code: Verified Neuro-Symbolic Decompilation of Algorithmic Transformers into Python and C"
+message: "If you use this software, please cite it as below."
+type: software
+authors:
+  - family-names: "olezix"
+    given-names: "olezix"
+    alias: "olezix"
+    website: "https://github.com/olezix"
+repository-code: "https://github.com/olezix/Circuit2Code"
+url: "https://github.com/olezix/Circuit2Code"
+license: MIT
+version: 1.0.0
+date-released: "2026-11-01"
+keywords:
+  - mechanistic interpretability
+  - program synthesis
+  - formal verification
+  - SMT
+  - Z3
+  - grokking
+  - modular arithmetic
+abstract: >-
+  Circuit2Code decompiles a small algorithmic Transformer into an equivalent
+  Python and ANSI C program whose equivalence is proved by the Z3 SMT solver
+  over the entire finite input domain, using certified enclosures of the
+  IEEE-754 forward pass as the float-to-real bridge.

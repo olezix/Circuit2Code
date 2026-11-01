@@ -16,7 +16,7 @@
     "beta1": 0.9,
     "beta2": 0.98,
     "seed": 3,
-    "log_every": 1000,
+    "log_every": 250,
     "grok_patience": 400,
     "post_grok_epochs": 2000,
     "eval_every": 250,
@@ -32,7 +32,7 @@
     "final_train_acc": 1.0,
     "final_test_acc": 1.0,
     "grokking_epoch": 1250,
-    "elapsed_s": 311.27,
+    "elapsed_s": 276.56,
     "n_params": 80768,
     "checkpoint_path": null
   },

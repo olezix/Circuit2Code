@@ -6,80 +6,116 @@
     {
       "max_freqs": 1,
       "full_basis": false,
-      "score_error": 3.019806626980426e-14,
-      "logit_error": 90.88783869625593,
+      "score_error": 2.6645352591003757e-14,
+      "logit_error": 60.53835555333309,
       "n_readout_parameters": 708,
-      "agreement": 0.15972421717897156,
+      "agreement": 0.23901177822464809,
       "model_equivalence": "refuted-by-counting"
     },
     {
       "max_freqs": 2,
       "full_basis": false,
-      "score_error": 3.019806626980426e-14,
-      "logit_error": 51.679105186650446,
+      "score_error": 2.6645352591003757e-14,
+      "logit_error": 31.35378404826129,
       "n_readout_parameters": 1180,
-      "agreement": 0.7380063200229819,
+      "agreement": 0.5248491812697501,
       "model_equivalence": "refuted-by-counting"
     },
     {
       "max_freqs": 3,
       "full_basis": false,
-      "score_error": 3.019806626980426e-14,
-      "logit_error": 26.013371342385252,
+      "score_error": 2.6645352591003757e-14,
+      "logit_error": 13.98561843372967,
       "n_readout_parameters": 1652,
-      "agreement": 0.820741166331514,
+      "agreement": 0.8994541798333812,
       "model_equivalence": "refuted-by-counting"
     },
     {
       "max_freqs": 4,
       "full_basis": false,
-      "score_error": 3.019806626980426e-14,
-      "logit_error": 16.19273939556784,
+      "score_error": 2.6645352591003757e-14,
+      "logit_error": 10.520459144561386,
       "n_readout_parameters": 2124,
-      "agreement": 0.9882217753519104,
+      "agreement": 0.9879345015800057,
       "model_equivalence": "refuted-by-counting"
     },
     {
       "max_freqs": 5,
       "full_basis": false,
-      "score_error": 3.019806626980426e-14,
-      "logit_error": 16.77125449240242,
+      "score_error": 2.6645352591003757e-14,
+      "logit_error": 10.286838426576466,
       "n_readout_parameters": 2596,
-      "agreement": 0.9982763573685722,
+      "agreement": 0.9948290721057167,
       "model_equivalence": "refuted-by-counting"
     },
     {
       "max_freqs": 6,
       "full_basis": false,
-      "score_error": 3.019806626980426e-14,
-      "logit_error": 13.160418939504794,
+      "score_error": 2.6645352591003757e-14,
+      "logit_error": 8.077756569050038,
       "n_readout_parameters": 3068,
-      "agreement": 0.9994254524561907,
+      "agreement": 0.995403619649526,
       "model_equivalence": "refuted-by-counting"
     },
     {
       "max_freqs": 7,
       "full_basis": false,
-      "score_error": 3.019806626980426e-14,
-      "logit_error": 12.237226308786772,
+      "score_error": 2.6645352591003757e-14,
+      "logit_error": 8.099743151515916,
       "n_readout_parameters": 3540,
-      "agreement": 1.0,
-      "model_equivalence": "proved"
+      "agreement": 0.9988509049123815,
+      "model_equivalence": "refuted-by-counting"
     },
     {
       "max_freqs": 8,
       "full_basis": false,
-      "score_error": 3.019806626980426e-14,
-      "logit_error": 10.971154280748047,
+      "score_error": 2.6645352591003757e-14,
+      "logit_error": 8.313436505004624,
       "n_readout_parameters": 4012,
+      "agreement": 0.9997127262280954,
+      "model_equivalence": "refuted-by-counting"
+    },
+    {
+      "max_freqs": 9,
+      "full_basis": false,
+      "score_error": 2.6645352591003757e-14,
+      "logit_error": 7.659071498441509,
+      "n_readout_parameters": 4484,
+      "agreement": 0.9994254524561907,
+      "model_equivalence": "refuted-by-counting"
+    },
+    {
+      "max_freqs": 10,
+      "full_basis": false,
+      "score_error": 2.6645352591003757e-14,
+      "logit_error": 6.656237494189295,
+      "n_readout_parameters": 4956,
       "agreement": 1.0,
       "model_equivalence": "proved"
     },
     {
+      "max_freqs": 11,
+      "full_basis": false,
+      "score_error": 2.6645352591003757e-14,
+      "logit_error": 5.680463281683139,
+      "n_readout_parameters": 5428,
+      "agreement": 0.9994254524561907,
+      "model_equivalence": "refuted-by-counting"
+    },
+    {
+      "max_freqs": 12,
+      "full_basis": false,
+      "score_error": 2.6645352591003757e-14,
+      "logit_error": 4.8762348365515855,
+      "n_readout_parameters": 5900,
+      "agreement": 0.9997127262280954,
+      "model_equivalence": "refuted-by-counting"
+    },
+    {
       "max_freqs": 29,
       "full_basis": true,
-      "score_error": 3.019806626980426e-14,
-      "logit_error": 1.6484591469634324e-12,
+      "score_error": 2.6645352591003757e-14,
+      "logit_error": 9.174883075502294e-13,
       "n_readout_parameters": 13924,
       "agreement": 1.0,
       "model_equivalence": "proved"
